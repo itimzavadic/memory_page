@@ -1,0 +1,30 @@
+{% extends "panel/base.html" %}
+
+{% block title %}Вход — Панель управления{% endblock %}
+
+{% block body %}
+<div class="login-page">
+  <div class="login-card">
+    <h1>Страницы памяти</h1>
+    {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+      <div class="message {{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="username">Логин</label>
+        <input type="text" id="username" name="username" required autofocus>
+      </div>
+      <div class="form-group">
+        <label for="password">Пароль</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%">Войти</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

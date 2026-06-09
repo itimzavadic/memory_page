@@ -1,0 +1,62 @@
+{% extends "panel/base.html" %}
+
+{% block title %}Модерация воспоминаний{% endblock %}
+
+{% block body %}
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <h1>Страницы памяти</h1>
+    <nav>
+      <a href="{% url 'admin_dashboard' %}">Все страницы</a>
+      <a href="{% url 'admin_memorial_create' %}">Создать страницу</a>
+      <a href="{% url 'admin_tribute_moderation' %}" class="active">Модерация</a>
+      <a href="{% url 'admin_logout' %}">Выйти</a>
+    </nav>
+  </aside>
+  <main class="admin-main">
+    <div class="admin-header">
+      <h2>Модерация воспоминаний</h2>
+    </div>
+
+    {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+      <div class="message {{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% for tribute in tributes %}
+    <div class="card tribute-moderation-card">
+      <div>
+        <p><strong>{{ tribute.author_name }}</strong>
+          {% if tribute.email %}<span style="color:#999">({{ tribute.email }})</span>{% endif %}
+        </p>
+        <p style="color:#666;font-size:0.85rem">
+          Страница: {{ tribute.memorial.full_name }} —
+          <a href="{% url 'admin_memorial_edit' tribute.memorial.pk %}">{{ tribute.memorial.slug }}</a>
+        </p>
+        <p style="margin-top:0.5rem;white-space:pre-line">{{ tribute.text }}</p>
+        {% if tribute.image %}<img src="{{ tribute.image.url }}" alt="">{% endif %}
+        {% if tribute.video %}<video src="{{ tribute.video.url }}" controls style="max-width:300px;margin-top:0.5rem"></video>{% endif %}
+        <p style="color:#999;font-size:0.8rem;margin-top:0.5rem">{{ tribute.created_at|date:"d.m.Y H:i" }}</p>
+      </div>
+      <div class="actions-row" style="flex-direction:column">
+        <form method="post" action="{% url 'admin_tribute_approve' tribute.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn-success" style="width:100%">Одобрить</button>
+        </form>
+        <form method="post" action="{% url 'admin_tribute_reject' tribute.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn-danger" style="width:100%">Отклонить</button>
+        </form>
+      </div>
+    </div>
+    {% empty %}
+    <div class="card" style="text-align:center;color:#999;padding:2rem">
+      Нет воспоминаний на модерации
+    </div>
+    {% endfor %}
+  </main>
+</div>
+{% endblock %}

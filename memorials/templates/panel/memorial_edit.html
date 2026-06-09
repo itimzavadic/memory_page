@@ -1,0 +1,189 @@
+{% extends "panel/base.html" %}
+
+{% block title %}Редактирование — {{ memorial.full_name }}{% endblock %}
+
+{% block body %}
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <h1>Страницы памяти</h1>
+    <nav>
+      <a href="{% url 'admin_dashboard' %}">Все страницы</a>
+      <a href="{% url 'admin_memorial_create' %}">Создать страницу</a>
+      <a href="{% url 'admin_tribute_moderation' %}">Модерация</a>
+      <a href="{% url 'admin_logout' %}">Выйти</a>
+    </nav>
+  </aside>
+  <main class="admin-main">
+    <div class="admin-header">
+      <h2>{{ memorial.full_name }}</h2>
+      <div class="actions-row">
+        <a href="{% url 'admin_memorial_preview' memorial.pk %}" class="btn-secondary" target="_blank">Превью</a>
+        <a href="{% url 'admin_memorial_qr' memorial.pk %}" class="btn-secondary">Скачать QR</a>
+        {% if memorial.is_published %}
+        <a href="{% url 'memorial_detail' memorial.slug %}" class="btn-secondary" target="_blank">Открыть</a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+      <div class="message {{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="tabs">
+      <a href="?section=basic" class="{% if section == 'basic' %}active{% endif %}">Основное</a>
+      <a href="?section=biography" class="{% if section == 'biography' %}active{% endif %}">Биография</a>
+      <a href="?section=events" class="{% if section == 'events' %}active{% endif %}">События</a>
+      <a href="?section=gallery" class="{% if section == 'gallery' %}active{% endif %}">Галерея</a>
+      <a href="?section=timeline" class="{% if section == 'timeline' %}active{% endif %}">Таймлайн</a>
+    </div>
+
+    {% if section == 'basic' %}
+    <div class="card">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="basic">
+        <div class="form-group">
+          <label>URL-идентификатор (slug)</label>
+          {{ basic_form.slug }}
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Фамилия</label>{{ basic_form.last_name }}</div>
+          <div class="form-group"><label>Имя</label>{{ basic_form.first_name }}</div>
+        </div>
+        <div class="form-group"><label>Отчество</label>{{ basic_form.patronymic }}</div>
+        <div class="form-row">
+          <div class="form-group"><label>Дата рождения</label>{{ basic_form.birth_date }}</div>
+          <div class="form-group"><label>Дата смерти</label>{{ basic_form.death_date }}</div>
+        </div>
+        <div class="form-group">
+          <label>Портрет</label>
+          {{ basic_form.portrait }}
+          {% if memorial.portrait %}<p><img src="{{ memorial.portrait.url }}" style="max-width:150px;margin-top:0.5rem"></p>{% endif %}
+        </div>
+        <div class="form-group">
+          <label>Музыка слайд-шоу (MP3)</label>
+          {{ basic_form.slideshow_music }}
+        </div>
+        <div class="form-group"><label>Заголовок «Помним…»</label>{{ basic_form.remembering_title }}</div>
+        <div class="form-group"><label>Развёрнутая биография</label>{{ basic_form.remembering_text }}</div>
+        <div class="form-group"><label>Вступление к событиям</label>{{ basic_form.events_intro }}</div>
+        <div class="form-group"><label>Статус</label>{{ basic_form.status }}</div>
+        <button type="submit" class="btn-primary">Сохранить</button>
+      </form>
+    </div>
+    {% endif %}
+
+    {% if section == 'biography' %}
+    <div class="card">
+      <p style="margin-bottom:1rem;color:#666">Блоки краткой биографии. Используются на странице и в слайд-шоу.</p>
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="biography">
+        {{ bio_formset.management_form }}
+        {% for form in bio_formset %}
+        <div class="formset-item">
+          {% if form.DELETE %}<label class="delete-row">{{ form.DELETE }} Удалить</label>{% endif %}
+          <div class="form-group"><label>Заголовок</label>{{ form.title }}</div>
+          <div class="form-group"><label>Текст</label>{{ form.text }}</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Фото (для слайд-шоу)</label>
+              {{ form.image }}
+              {% if form.instance.image %}<img src="{{ form.instance.image.url }}" style="max-width:120px;margin-top:0.3rem;display:block">{% endif %}
+            </div>
+            <div class="form-group"><label>Порядок</label>{{ form.order }}</div>
+          </div>
+          {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn-primary">Сохранить биографию</button>
+      </form>
+    </div>
+    {% endif %}
+
+    {% if section == 'events' %}
+    <div class="card">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="events">
+        {{ event_formset.management_form }}
+        {% for form in event_formset %}
+        <div class="formset-item">
+          {% if form.DELETE %}<label class="delete-row">{{ form.DELETE }} Удалить</label>{% endif %}
+          <div class="form-row">
+            <div class="form-group"><label>Тип</label>{{ form.event_type }}</div>
+            <div class="form-group"><label>Дата</label>{{ form.date }}</div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Начало</label>{{ form.start_time }}</div>
+            <div class="form-group"><label>Конец</label>{{ form.end_time }}</div>
+          </div>
+          <div class="form-group"><label>Место</label>{{ form.location_name }}</div>
+          <div class="form-group"><label>Адрес</label>{{ form.address }}</div>
+          <div class="form-group"><label>Телефон</label>{{ form.phone }}</div>
+          <div class="form-group"><label>Описание</label>{{ form.description }}</div>
+          <div class="form-group"><label>Порядок</label>{{ form.order }}</div>
+          {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn-primary">Сохранить события</button>
+      </form>
+    </div>
+    {% endif %}
+
+    {% if section == 'gallery' %}
+    <div class="card">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="gallery">
+        {{ gallery_formset.management_form }}
+        {% for form in gallery_formset %}
+        <div class="formset-item">
+          {% if form.DELETE %}<label class="delete-row">{{ form.DELETE }} Удалить</label>{% endif %}
+          <div class="form-row">
+            <div class="form-group"><label>Тип</label>{{ form.media_type }}</div>
+            <div class="form-group"><label>Порядок</label>{{ form.order }}</div>
+          </div>
+          <div class="form-group">
+            <label>Фото</label>{{ form.image }}
+            {% if form.instance.image %}<img src="{{ form.instance.image.url }}" style="max-width:120px;margin-top:0.3rem;display:block">{% endif %}
+          </div>
+          <div class="form-group"><label>Видео</label>{{ form.video }}</div>
+          <div class="form-group"><label>Подпись</label>{{ form.caption }}</div>
+          {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn-primary">Сохранить галерею</button>
+      </form>
+    </div>
+    {% endif %}
+
+    {% if section == 'timeline' %}
+    <div class="card">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="section" value="timeline">
+        {{ timeline_formset.management_form }}
+        {% for form in timeline_formset %}
+        <div class="formset-item">
+          {% if form.DELETE %}<label class="delete-row">{{ form.DELETE }} Удалить</label>{% endif %}
+          <div class="form-row">
+            <div class="form-group"><label>Год</label>{{ form.year }}</div>
+            <div class="form-group"><label>Порядок</label>{{ form.order }}</div>
+          </div>
+          <div class="form-group"><label>Заголовок</label>{{ form.title }}</div>
+          <div class="form-group"><label>Описание</label>{{ form.description }}</div>
+          {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn-primary">Сохранить таймлайн</button>
+      </form>
+    </div>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}

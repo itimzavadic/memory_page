@@ -1,0 +1,260 @@
+{% load static memorial_tags %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>В память о {{ memorial.full_name }}</title>
+  <meta property="og:title" content="В память о {{ memorial.full_name }}">
+  <meta property="og:description" content="{{ memorial.birth_date|russian_date }} — {{ memorial.death_date|russian_date }}">
+  {% if memorial.portrait %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ memorial.portrait.url }}">{% endif %}
+  <link rel="stylesheet" href="{% static 'css/memorial.css' %}">
+</head>
+<body>
+
+{% if messages %}
+<div class="messages">
+  {% for message in messages %}
+  <div class="message {{ message.tags }}">{{ message }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Hero -->
+<section class="hero" id="top">
+  <div class="hero-floor"></div>
+  <div class="hero-inner">
+    <div class="hero-portrait-wrap">
+      <div class="hero-shadows" aria-hidden="true">
+        <span class="hero-shadow-frame-cast"></span>
+        <span class="hero-shadow-candle-base"></span>
+        <span class="hero-shadow-candle-cast"></span>
+      </div>
+      <div class="hero-frame">
+        <div class="portrait-slot">
+          {% if memorial.portrait %}
+          <img src="{{ memorial.portrait.url }}" alt="{{ memorial.full_name }}" class="portrait">
+          {% else %}
+          <div class="portrait-placeholder">Фото</div>
+          {% endif %}
+        </div>
+        <img src="{% static 'img/frame.png' %}" alt="" class="frame-border">
+        <div class="hero-candle-wrap">
+          <img src="{% static 'img/candle.png' %}" alt="" class="hero-candle">
+          <div class="hero-candle-flame" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-content">
+      <p class="hero-script">В любящей памяти</p>
+      <h1 class="hero-name">
+        <span class="hero-name-part">{{ memorial.last_name|upper }}</span>
+        <span class="hero-name-part">{{ memorial.first_name|upper }}</span>
+        {% if memorial.patronymic %}<span class="hero-name-part">{{ memorial.patronymic|upper }}</span>{% endif %}
+      </h1>
+      <p class="hero-dates">{{ memorial.birth_date|russian_date }} — {{ memorial.death_date|russian_date }}</p>
+      {% if biography_sections %}
+      <div class="hero-actions">
+        <button class="btn" id="play-slideshow">Слайд-шоу</button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="scroll-hint">↓</div>
+</section>
+
+<!-- Biography sections -->
+{% if biography_sections %}
+<section class="bio-sections">
+  {% for section in biography_sections %}
+  <div class="bio-block" id="bio-{{ forloop.counter }}">
+    <div class="bio-block-inner">
+      <h3>{{ section.title }}</h3>
+      <p>{{ section.text }}</p>
+    </div>
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+<!-- Remembering -->
+{% if memorial.remembering_text %}
+<section class="section" id="remembering">
+  <h2 class="section-title">{{ memorial.remembering_title }} {{ memorial.first_name }}</h2>
+  <div class="remembering-card">
+    <p>{{ memorial.remembering_text }}</p>
+  </div>
+</section>
+{% endif %}
+
+<!-- Events -->
+{% if events %}
+<section class="section" id="events">
+  <h2 class="section-title">Прощание с {{ memorial.first_name }}</h2>
+  {% if memorial.events_intro %}<p class="section-intro">{{ memorial.events_intro }}</p>{% endif %}
+  {% for event in events %}
+  <div class="event-card">
+    <span class="event-badge">{{ event.get_event_type_display }}</span>
+    <div class="event-date">
+      {{ event.date|weekday_ru }}<br>
+      {{ event.date|date:"M d, Y" }}
+    </div>
+    <div class="event-location">
+      <strong>{{ event.location_name }}</strong>
+      {% if event.address %}<span>{{ event.address }}</span>{% endif %}
+    </div>
+    <div class="event-time">
+      {% if event.start_time %}{{ event.start_time|time_ampm }}{% endif %}
+      {% if event.end_time %} — {{ event.end_time|time_ampm }}{% endif %}
+    </div>
+    {% if event.phone %}
+    <div class="event-phone"><a href="tel:{{ event.phone }}">📞</a></div>
+    {% else %}<div></div>{% endif %}
+    {% if event.description %}<div class="event-description">{{ event.description }}</div>{% endif %}
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+<!-- Tributes -->
+<section class="section" id="tributes">
+  <h2 class="section-title">Воспоминания</h2>
+  {% if tributes %}
+  <div class="tributes-grid">
+    {% for tribute in tributes %}
+    <article class="tribute-card">
+      {% if tribute.image %}<img src="{{ tribute.image.url }}" alt="">{% endif %}
+      {% if tribute.video %}<video src="{{ tribute.video.url }}" controls></video>{% endif %}
+      <p>{{ tribute.text }}</p>
+      <div class="tribute-meta">
+        <strong>{{ tribute.author_name }}</strong><br>
+        {{ tribute.created_at|date:"d M Y" }}
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if tribute_form %}
+  <div class="share-memory" style="margin-top:3rem">
+    <h3>Поделиться воспоминанием</h3>
+    <p style="color:#999;margin-bottom:1.5rem;font-size:0.9rem">
+      Помогите сохранить память о {{ memorial.first_name }}. Воспоминания проходят проверку перед публикацией.
+    </p>
+    <button class="btn" id="open-tribute-form">Написать воспоминание</button>
+  </div>
+  {% endif %}
+</section>
+
+<!-- Gallery -->
+{% if gallery_items %}
+<section class="section" id="gallery">
+  <h2 class="section-title">Фотогалерея</h2>
+  <div class="gallery-grid">
+    {% for item in gallery_items %}
+    <figure class="gallery-item">
+      {% if item.media_type == 'video' and item.video %}
+      <video src="{{ item.video.url }}" controls></video>
+      {% elif item.image %}
+      <img src="{{ item.image.url }}" alt="{{ item.caption }}">
+      {% endif %}
+      {% if item.caption %}<figcaption>{{ item.caption }}</figcaption>{% endif %}
+    </figure>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- Timeline -->
+{% if timeline_items %}
+<section class="section" id="timeline">
+  <h2 class="section-title">Хронология жизни</h2>
+  <div class="timeline">
+    {% for item in timeline_items %}
+    <div class="timeline-item">
+      <div class="timeline-year">{{ item.year }}</div>
+      <div class="timeline-title">{{ item.title }}</div>
+      {% if item.description %}<p>{{ item.description }}</p>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<footer class="site-footer">
+  <p>Страница памяти о {{ memorial.full_name }}</p>
+</footer>
+
+<!-- Tribute modal -->
+{% if tribute_form %}
+<div id="tribute-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1500;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:#fff;border-radius:8px;padding:2rem;max-width:500px;width:100%;max-height:90vh;overflow-y:auto">
+    <h3 style="margin-bottom:1rem">Поделиться воспоминанием</h3>
+    <form method="post" action="{% url 'tribute_submit' memorial.slug %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>{{ tribute_form.author_name.label }}</label>
+        {{ tribute_form.author_name }}
+      </div>
+      <div class="form-group">
+        <label>{{ tribute_form.email.label }}</label>
+        {{ tribute_form.email }}
+      </div>
+      <div class="form-group">
+        <label>Ваше воспоминание</label>
+        {{ tribute_form.text }}
+      </div>
+      <div class="form-group">
+        <label>Фото (необязательно)</label>
+        {{ tribute_form.image }}
+      </div>
+      <div class="form-group">
+        <label>Видео (необязательно)</label>
+        {{ tribute_form.video }}
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn">Отправить</button>
+        <button type="button" class="btn btn-share" id="close-tribute-modal">Отмена</button>
+      </div>
+    </form>
+  </div>
+</div>
+<style>
+#tribute-modal.open { display: flex !important; }
+</style>
+{% endif %}
+
+<!-- Slideshow -->
+{% if biography_sections %}
+<div class="slideshow-overlay" id="slideshow-overlay">
+  <button class="slideshow-close" id="slideshow-close">&times;</button>
+  <div class="slideshow-progress" id="slideshow-progress">1 / {{ biography_sections|length }}</div>
+  {% for section in biography_sections %}
+  <div class="slideshow-slide">
+    {% if section.image %}
+    <div class="slide-bg" style="background-image:url('{{ section.image.url }}')"></div>
+    {% else %}
+    <div class="slide-bg" style="background:linear-gradient(135deg,#2c2c2c,#1a1a1a)"></div>
+    {% endif %}
+    <div class="slide-overlay"></div>
+    <div class="slide-content">
+      <h2>{{ section.title }}</h2>
+      <p>{{ section.text }}</p>
+    </div>
+  </div>
+  {% endfor %}
+  <div class="slideshow-controls">
+    <button id="slideshow-prev">← Назад</button>
+    <button id="slideshow-pause">Пауза</button>
+    <button id="slideshow-next">Далее →</button>
+  </div>
+</div>
+{% if memorial.slideshow_music %}
+<audio id="slideshow-audio" src="{{ memorial.slideshow_music.url }}" loop></audio>
+{% endif %}
+{% endif %}
+
+<script src="{% static 'js/memorial.js' %}"></script>
+<script src="{% static 'js/slideshow.js' %}"></script>
+</body>
+</html>
