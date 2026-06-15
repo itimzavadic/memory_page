@@ -7,7 +7,11 @@
   <title>В память о {{ memorial.full_name }}</title>
   <meta property="og:title" content="В память о {{ memorial.full_name }}">
   <meta property="og:description" content="{{ memorial.birth_date|russian_date }} — {{ memorial.death_date|russian_date }}">
-  {% if memorial.portrait %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ memorial.portrait.url }}">{% endif %}
+  {% if memorial.portrait %}
+  <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ memorial.portrait.url }}">
+  {% else %}
+  <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% hero_image 'frame' %}">
+  {% endif %}
   <link rel="stylesheet" href="{% static 'css/memorial.css' %}">
 </head>
 <body>
@@ -25,23 +29,10 @@
   <div class="hero-floor"></div>
   <div class="hero-inner">
     <div class="hero-portrait-wrap">
-      <div class="hero-shadows" aria-hidden="true">
-        <span class="hero-shadow-frame-cast"></span>
-        <span class="hero-shadow-candle-base"></span>
-        <span class="hero-shadow-candle-cast"></span>
-      </div>
       <div class="hero-frame">
-        <div class="portrait-slot">
-          {% if memorial.portrait %}
-          <img src="{{ memorial.portrait.url }}" alt="{{ memorial.full_name }}" class="portrait">
-          {% else %}
-          <div class="portrait-placeholder">Фото</div>
-          {% endif %}
-        </div>
-        <img src="{% static 'img/frame.png' %}" alt="" class="frame-border">
+        <img src="{% hero_image 'frame' %}" alt="" class="frame-border">
         <div class="hero-candle-wrap">
-          <img src="{% static 'img/candle.png' %}" alt="" class="hero-candle">
-          <div class="hero-candle-flame" aria-hidden="true"></div>
+          <img src="{% hero_image 'candle' %}" alt="" class="hero-candle">
         </div>
       </div>
     </div>

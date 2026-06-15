@@ -1,22 +1,39 @@
 from datetime import date, time
+from pathlib import Path
 
+from django.conf import settings
+from django.core.files import File
 from django.core.management.base import BaseCommand
 
 from memorials.models import (
     BiographySection,
     Event,
     EventType,
-    GalleryItem,
     Memorial,
     MemorialStatus,
     TimelineItem,
     Tribute,
     TributeStatus,
 )
+from memorials.templatetags.memorial_tags import HERO_IMAGES
+
+DEMO_PORTRAIT_CANDIDATES = [
+    Path(settings.BASE_DIR) / "content" / "photo_2026-06-09_17-13-00.png",
+    Path(settings.BASE_DIR) / "memorials" / "static" / HERO_IMAGES["portrait"],
+]
 
 
 class Command(BaseCommand):
     help = "Загрузить демо-страницу памяти (Маргарет Томпсон)"
+
+    def _attach_demo_portrait(self, memorial):
+        if memorial.portrait:
+            return
+        portrait_path = next((p for p in DEMO_PORTRAIT_CANDIDATES if p.is_file()), None)
+        if not portrait_path:
+            return
+        with portrait_path.open("rb") as portrait_file:
+            memorial.portrait.save(portrait_path.name, File(portrait_file), save=True)
 
     def handle(self, *args, **options):
         memorial, created = Memorial.objects.get_or_create(
@@ -91,6 +108,8 @@ class Command(BaseCommand):
                 text="Бабушка всегда называла меня «дружище» и вселяла уверенность, что я могу всё.",
                 status=TributeStatus.APPROVED,
             )
+
+        self._attach_demo_portrait(memorial)
 
         self.stdout.write(self.style.SUCCESS(
             f"Демо-страница: /p/{memorial.slug}/"

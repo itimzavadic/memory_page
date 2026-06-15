@@ -1,6 +1,12 @@
 from django import template
+from django.templatetags.static import static
 
 register = template.Library()
+
+HERO_IMAGES = {
+    "frame": "img/frame.png",
+    "candle": "img/candle.png",
+}
 
 MONTHS_RU = {
     1: "января",
@@ -26,6 +32,14 @@ WEEKDAYS_RU = {
     5: "Суббота",
     6: "Воскресенье",
 }
+
+
+@register.simple_tag
+def hero_image(name):
+    path = HERO_IMAGES.get(name)
+    if not path:
+        return ""
+    return static(path)
 
 
 @register.filter
