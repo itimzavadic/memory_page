@@ -17,10 +17,7 @@ from memorials.models import (
 )
 from memorials.templatetags.memorial_tags import HERO_IMAGES
 
-DEMO_PORTRAIT_CANDIDATES = [
-    Path(settings.BASE_DIR) / "content" / "photo_2026-06-09_17-13-00.png",
-    Path(settings.BASE_DIR) / "memorials" / "static" / HERO_IMAGES["portrait"],
-]
+DEMO_PORTRAIT_PATH = Path(settings.BASE_DIR) / "memorials" / "static" / HERO_IMAGES["portrait"]
 
 
 class Command(BaseCommand):
@@ -29,7 +26,7 @@ class Command(BaseCommand):
     def _attach_demo_portrait(self, memorial):
         if memorial.portrait:
             return
-        portrait_path = next((p for p in DEMO_PORTRAIT_CANDIDATES if p.is_file()), None)
+        portrait_path = DEMO_PORTRAIT_PATH if DEMO_PORTRAIT_PATH.is_file() else None
         if not portrait_path:
             return
         with portrait_path.open("rb") as portrait_file:

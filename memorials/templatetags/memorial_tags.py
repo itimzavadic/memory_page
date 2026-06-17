@@ -1,4 +1,7 @@
+import os
+
 from django import template
+from django.contrib.staticfiles import finders
 from django.templatetags.static import static
 
 register = template.Library()
@@ -6,6 +9,7 @@ register = template.Library()
 HERO_IMAGES = {
     "frame": "img/frame.png",
     "candle": "img/candle.png",
+    "portrait": "img/portrait.png",
 }
 
 MONTHS_RU = {
@@ -39,7 +43,12 @@ def hero_image(name):
     path = HERO_IMAGES.get(name)
     if not path:
         return ""
-    return static(path)
+    url = static(path)
+    found = finders.find(path)
+    if found:
+        version = int(os.path.getmtime(found))
+        return f"{url}?v={version}"
+    return url
 
 
 @register.filter

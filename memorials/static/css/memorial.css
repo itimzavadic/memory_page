@@ -15,11 +15,9 @@
   --hero-text-above-center: 1.5rem;
   --hero-text-offset-x: 5cm;
   --hero-text-lift: 3.3cm;
-  --hero-candle-lift: 2.5cm;
+  --hero-candle-lift: 3cm;
+  --hero-candle-shift-x: 0.3cm;
   --hero-candle-shrink: 1.5cm;
-  --hero-candle-edge-blur: 4px;
-  --hero-candle-edge-strip: 8%;
-  --hero-candle-edge-feather: 5%;
   --card: #faf8f4;
   --text: #3d3429;
   --text-light: #6b6358;
@@ -28,7 +26,20 @@
   --white: #ffffff;
   --hero-frame-base-width: 640px;
   --hero-frame-expand: 6cm;
-  --hero-frame-width: calc((var(--hero-frame-base-width) + 2 * var(--hero-frame-expand)) * var(--hero-frame-scale));
+  --hero-frame-canvas-ref: 4000;
+  --hero-frame-canvas-width: 4500;
+  --hero-frame-canvas-height: 4000;
+  --hero-frame-canvas-scale: calc(var(--hero-frame-canvas-width) / var(--hero-frame-canvas-ref));
+  --hero-frame-diagonal-extra: 4cm;
+  --hero-frame-width-base: calc((var(--hero-frame-base-width) + 2 * var(--hero-frame-expand)) * var(--hero-frame-scale) * var(--hero-frame-canvas-scale));
+  --hero-frame-width: calc(
+    var(--hero-frame-width-base) +
+    var(--hero-frame-diagonal-extra) * var(--hero-frame-canvas-width) /
+    sqrt(
+      var(--hero-frame-canvas-width) * var(--hero-frame-canvas-width) +
+      var(--hero-frame-canvas-height) * var(--hero-frame-canvas-height)
+    )
+  );
 }
 
 * {
@@ -47,6 +58,7 @@ body {
   color: var(--text);
   line-height: 1.7;
   font-size: 16px;
+  overflow-x: hidden;
 }
 
 h1, h2, h3, .section-title {
@@ -77,10 +89,10 @@ h1, h2, h3, .section-title {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 1.25rem 2rem 2.5rem;
+  padding: 1.25rem 2rem 2.5rem 0;
   position: relative;
   background: var(--hero-bg);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .hero-floor {
@@ -94,39 +106,38 @@ h1, h2, h3, .section-title {
 }
 
 .hero-inner {
-  display: grid;
-  grid-template-columns: auto auto;
-  gap: 0.75rem;
-  max-width: 1500px;
-  width: 100%;
-  min-height: calc(var(--hero-min-height) - 2rem);
+  display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  max-width: none;
+  min-height: calc(var(--hero-min-height) - 2rem);
   position: relative;
   z-index: 2;
   padding-bottom: 0;
 }
 
 .hero-portrait-wrap {
-  position: relative;
+  position: absolute;
+  left: 0;
+  top: 50%;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   width: fit-content;
-  max-width: 100%;
-  padding: 0 2rem 0 4rem;
-  transform: translate(
-    calc(-3.5cm - var(--hero-frame-offset-x) + var(--hero-shift-x)),
-    calc(-12px - 0.2cm - var(--hero-lift) - var(--hero-frame-offset-y))
-  );
+  max-width: none;
+  padding: 0;
+  z-index: 2;
+  pointer-events: none;
+  transform: translateY(calc(-50% - 12px - 0.2cm - var(--hero-lift) - var(--hero-frame-offset-y)));
 }
 
 .hero-frame {
   position: relative;
   width: var(--hero-frame-width);
-  max-width: 100%;
+  max-width: none;
+  flex-shrink: 0;
   z-index: 1;
   background: transparent;
-  transform: translateX(calc(-1 * var(--hero-frame-nudge-left)));
 }
 
 .hero-frame img.frame-border {
@@ -144,37 +155,7 @@ h1, h2, h3, .section-title {
   width: calc(50% - var(--hero-candle-shrink));
   z-index: 3;
   pointer-events: none;
-  transform: translate(-8%, 6%) translateY(calc(-1 * var(--hero-candle-lift)));
-}
-
-.hero-candle-wrap::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: var(--hero-candle-edge-strip);
-  z-index: 2;
-  pointer-events: none;
-  backdrop-filter: blur(var(--hero-candle-edge-blur));
-  -webkit-backdrop-filter: blur(var(--hero-candle-edge-blur));
-  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 70%);
-  mask-image: linear-gradient(to top, #000 0%, transparent 70%);
-}
-
-.hero-candle-wrap::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: var(--hero-candle-edge-strip);
-  height: 100%;
-  z-index: 2;
-  pointer-events: none;
-  backdrop-filter: blur(var(--hero-candle-edge-blur));
-  -webkit-backdrop-filter: blur(var(--hero-candle-edge-blur));
-  -webkit-mask-image: linear-gradient(to right, #000 0%, transparent 70%);
-  mask-image: linear-gradient(to right, #000 0%, transparent 70%);
+  transform: translate(calc(-8% + var(--hero-candle-shift-x)), 6%) translateY(calc(-1 * var(--hero-candle-lift)));
 }
 
 .hero-candle {
@@ -183,14 +164,6 @@ h1, h2, h3, .section-title {
   height: auto;
   position: relative;
   z-index: 1;
-  -webkit-mask-image:
-    linear-gradient(to right, transparent 0%, #000 var(--hero-candle-edge-feather)),
-    linear-gradient(to top, transparent 0%, #000 var(--hero-candle-edge-feather));
-  -webkit-mask-composite: source-in;
-  mask-image:
-    linear-gradient(to right, transparent 0%, #000 var(--hero-candle-edge-feather)),
-    linear-gradient(to top, transparent 0%, #000 var(--hero-candle-edge-feather));
-  mask-composite: intersect;
 }
 
 .hero-content {
@@ -781,11 +754,7 @@ h1, h2, h3, .section-title {
   }
 
   .hero-portrait-wrap {
-    padding: 0 1.5rem 0 2.5rem;
-    transform: translate(
-      calc(-3.5cm - var(--hero-frame-offset-x) + var(--hero-shift-x)),
-      calc(-8px - 0.2cm - var(--hero-lift) - var(--hero-frame-offset-y))
-    );
+    transform: translateY(calc(-50% - 8px - 0.2cm - var(--hero-lift) - var(--hero-frame-offset-y)));
   }
 
   .hero-name {
@@ -793,7 +762,7 @@ h1, h2, h3, .section-title {
   }
 
   .hero-candle-wrap {
-    transform: translate(-6%, 5%) translateY(calc(-1 * var(--hero-candle-lift)));
+    transform: translate(calc(-6% + var(--hero-candle-shift-x)), 5%) translateY(calc(-1 * var(--hero-candle-lift)));
   }
 }
 
@@ -816,22 +785,21 @@ h1, h2, h3, .section-title {
   }
 
   .hero-inner {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-    align-items: center;
     min-height: auto;
   }
 
   .hero-portrait-wrap {
-    padding: 0 1rem 0 2rem;
-    transform: translate(
-      calc(-3.5cm - var(--hero-frame-offset-x) + var(--hero-shift-x)),
-      calc(-8px - 0.4cm - var(--hero-lift) - var(--hero-frame-offset-y))
-    );
+    left: 0;
+    max-width: 100%;
+    transform: translateY(calc(-50% - 8px - 0.4cm - var(--hero-lift) - var(--hero-frame-offset-y)));
+  }
+
+  .hero-frame {
+    max-width: 100%;
   }
 
   .hero-candle-wrap {
-    transform: translate(-5%, 4%) translateY(calc(-1 * var(--hero-candle-lift)));
+    transform: translate(calc(-5% + var(--hero-candle-shift-x)), 4%) translateY(calc(-1 * var(--hero-candle-lift)));
   }
 
   .hero-name {
