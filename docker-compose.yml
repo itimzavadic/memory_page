@@ -1,0 +1,19 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      SITE_URL: http://localhost:3000
+      SESSION_SECRET: ${SESSION_SECRET:-dev-secret-change-in-production-min-32-chars!!}
+      DATABASE_URL: /app/data/mp-vobraz.db
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@mp-vobraz.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin12345}
+    volumes:
+      - app_data:/app/data
+      - app_uploads:/app/uploads
+    restart: unless-stopped
+
+volumes:
+  app_data:
+  app_uploads:

@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@theme {
+  --color-memorial-text: rgb(104 85 76);
+  --color-memorial-accent: rgb(28 152 160);
+  --color-memorial-bg: rgb(241 231 221);
+  --color-memorial-bg-lower: #cec2b8;
+  --memorial-hero-bottom-strip: 100px;
+  --color-memorial-border: rgb(193 169 141);
+  --color-memorial-error: rgb(128 34 34);
+  --color-memorial-card: rgb(255 255 255);
+  --font-serif: Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-inter), Inter, Helvetica, Arial, sans-serif;
+  --memorial-page-inset: 1.5cm;
+
+  /*
+   * Рамка hero — зафиксировано (v1). Не менять без явного запроса.
+   * symmetric: +5cm со всех сторон от базового размера
+   * offset-top: +10.5cm вверх | offset-right: +7cm вправо | offset-left: +2cm влево
+   */
+  --memorial-frame-symmetric: 5cm;
+  --memorial-frame-offset-top: 10.5cm;
+  --memorial-frame-offset-right: 7cm;
+  --memorial-frame-offset-left: 2cm;
+}
+
+body {
+  background-color: var(--color-memorial-bg);
+  color: var(--color-memorial-text);
+  font-family: var(--font-sans);
+}
+
+.memorial-script {
+  font-family: var(--font-memorial-script), "Bad Script", cursive;
+}
+
+.memorial-heading {
+  font-family: var(--font-serif);
+}
+
+.memorial-hero {
+  position: relative;
+  isolation: isolate;
+}
+
+/* Зафиксированная рамка на левой половине hero */
+.memorial-frame-fixed {
+  position: relative;
+  --frame-base-h: min(70dvh, calc(100dvh - 2 * var(--memorial-page-inset)));
+  height: calc(
+    var(--frame-base-h) + 2 * var(--memorial-frame-symmetric) + var(--memorial-frame-offset-top)
+  );
+  width: calc(
+    var(--frame-base-h) * 3 / 4 + 2 * var(--memorial-frame-symmetric) +
+      var(--memorial-frame-offset-right) + var(--memorial-frame-offset-left)
+  );
+  max-width: calc(
+    min(100%, 42vw) + 2 * var(--memorial-frame-symmetric) + var(--memorial-frame-offset-right) +
+      var(--memorial-frame-offset-left)
+  );
+  margin-top: calc(-1 * var(--memorial-frame-offset-top));
+  margin-left: calc(-1 * var(--memorial-frame-offset-left));
+  margin-right: auto;
+}
+
+@media (min-width: 1024px) {
+  .memorial-frame-fixed {
+    --frame-base-h: calc(100dvh - 2 * var(--memorial-page-inset));
+    max-width: calc(
+      85% + 2 * var(--memorial-frame-symmetric) + var(--memorial-frame-offset-right) +
+        var(--memorial-frame-offset-left)
+    );
+  }
+}
+
+.admin-shell {
+  min-height: 100vh;
+  background: #f5f5f4;
+}
+
+.admin-card {
+  background: white;
+  border: 1px solid #e7e5e4;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+}

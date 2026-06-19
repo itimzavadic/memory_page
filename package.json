@@ -1,0 +1,48 @@
+{
+  "name": "mp-vobraz",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "dev:clean": "node -e \"try{require('fs').rmSync('.next',{recursive:true,force:true})}catch(e){}\" && next dev",
+    "clean": "node -e \"try{require('fs').rmSync('.next',{recursive:true,force:true})}catch(e){} try{require('fs').rmSync('node_modules/.cache',{recursive:true,force:true})}catch(e){}\"",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx db/migrate.ts",
+    "db:seed": "tsx db/seed.ts",
+    "db:setup": "npm run db:generate && npm run db:migrate && npm run db:seed"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "better-sqlite3": "^11.9.1",
+    "drizzle-orm": "^0.44.2",
+    "iron-session": "^8.0.4",
+    "next": "^15.3.4",
+    "qrcode": "^1.5.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "sanitize-html": "^2.17.0",
+    "slugify": "^1.6.6",
+    "uuid": "^11.1.0",
+    "zod": "^3.25.67"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@tailwindcss/postcss": "^4.1.10",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.15.32",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@types/sanitize-html": "^2.16.0",
+    "@types/uuid": "^10.0.0",
+    "drizzle-kit": "^0.31.1",
+    "eslint": "^9.29.0",
+    "eslint-config-next": "^15.3.4",
+    "tailwindcss": "^4.1.10",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  }
+}
