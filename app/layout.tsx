@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bad_Script, Inter } from "next/font/google";
+import { Great_Vibes, Inter, Vollkorn_SC } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -7,10 +7,16 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-const memorialScript = Bad_Script({
+const memorialScript = Great_Vibes({
   weight: "400",
-  subsets: ["latin", "cyrillic"],
+  subsets: ["latin", "latin-ext"],
   variable: "--font-memorial-script",
+});
+
+const memorialName = Vollkorn_SC({
+  weight: ["700"],
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-memorial-name",
 });
 
 export const metadata: Metadata = {
@@ -29,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" suppressHydrationWarning>
-      <body className={`${inter.variable} ${memorialScript.variable} antialiased`} suppressHydrationWarning>
+      <body className={`${inter.variable} ${memorialScript.variable} ${memorialName.variable} antialiased`} suppressHydrationWarning>
         {children}
       </body>
     </html>

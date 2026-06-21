@@ -5,13 +5,19 @@
   --color-memorial-accent: rgb(28 152 160);
   --color-memorial-bg: rgb(241 231 221);
   --color-memorial-bg-lower: #cec2b8;
-  --memorial-hero-bottom-strip: 100px;
+  --memorial-hero-lower-rise: -140px;
+  --memorial-lower-content-offset: 150px;
   --color-memorial-border: rgb(193 169 141);
   --color-memorial-error: rgb(128 34 34);
   --color-memorial-card: rgb(255 255 255);
   --font-serif: Georgia, "Times New Roman", serif;
   --font-sans: var(--font-inter), Inter, Helvetica, Arial, sans-serif;
   --memorial-page-inset: 1.5cm;
+  --memorial-space-xs: 8px;
+  --memorial-space-sm: 20px;
+  --memorial-space-md: 40px;
+  --memorial-hero-padding-x: var(--memorial-space-md);
+  --memorial-hero-padding-y: var(--memorial-space-sm);
 
   /*
    * Рамка hero — зафиксировано (v1). Не менять без явного запроса.
@@ -22,6 +28,7 @@
   --memorial-frame-offset-top: 10.5cm;
   --memorial-frame-offset-right: 7cm;
   --memorial-frame-offset-left: 2cm;
+  --memorial-frame-offset-y: calc(-1cm + 60px);
 }
 
 body {
@@ -31,19 +38,49 @@ body {
 }
 
 .memorial-script {
-  font-family: var(--font-memorial-script), "Bad Script", cursive;
+  font-family: var(--font-memorial-script), "Great Vibes", cursive;
+  letter-spacing: 0.02em;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "liga" 1, "calt" 1;
 }
 
 .memorial-heading {
   font-family: var(--font-serif);
 }
 
+.memorial-name {
+  font-family: var(--font-memorial-name), "Vollkorn SC", Georgia, "Times New Roman", serif;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  font-feature-settings: "liga" 1;
+}
+
 .memorial-hero {
   position: relative;
-  isolation: isolate;
+}
+
+.memorial-hero::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: calc(50% - var(--memorial-hero-lower-rise));
+  background-color: var(--color-memorial-bg-lower);
+  pointer-events: none;
+}
+
+.memorial-hero-content {
+  position: relative;
+  z-index: 1;
 }
 
 /* Зафиксированная рамка на левой половине hero */
+.memorial-frame-composition {
+  transform: translateY(var(--memorial-frame-offset-y));
+}
+
 .memorial-frame-fixed {
   position: relative;
   --frame-base-h: min(70dvh, calc(100dvh - 2 * var(--memorial-page-inset)));

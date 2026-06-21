@@ -1,17 +1,16 @@
 import Image from "next/image";
 import type { MemorialPublicData } from "@/types/memorial";
-import { fileUrl, formatDateRu, formatLifeYears, getMemorialFramePhotoSize, getVideoEmbedUrl } from "@/lib/utils";
+import { fileUrl, formatDateRu, getMemorialFramePhotoSize, getVideoEmbedUrl } from "@/lib/utils";
 
 interface MemorialPageViewProps {
   memorial: MemorialPublicData;
 }
 
-const FRAME_PHOTO = "/assets/pexels-eyupbelen-3117822.jpg?v=2";
 const FRAME_IMAGE = "/assets/frame.png";
 const CANDLE_MOVE_DISTANCE_PX = 380;
 const CANDLE_MOVE_ANGLE_DEG = 65;
 const CANDLE_HEIGHT_PX = 350;
-const CANDLE_OFFSET_X_EXTRA_PX = 15;
+const CANDLE_OFFSET_X_EXTRA_PX = 5;
 const CANDLE_OFFSET_Y_EXTRA_PX = -5;
 
 function getCandleTransform(): string {
@@ -26,20 +25,20 @@ function splitFullName(fullName: string): string[] {
 }
 
 export function MemorialPageView({ memorial }: MemorialPageViewProps) {
-  const framePhoto = fileUrl(memorial.coverPhoto) ?? FRAME_PHOTO;
+  const framePhoto = fileUrl(memorial.coverPhoto);
   const framePhotoSize = getMemorialFramePhotoSize();
   const nameParts = splitFullName(memorial.fullName);
-  const lifeYears = formatLifeYears(memorial.birthDate, memorial.deathDate);
   const birthFormatted = formatDateRu(memorial.birthDate);
   const deathFormatted = formatDateRu(memorial.deathDate);
 
   return (
     <main className="bg-memorial-bg-lower text-memorial-text">
-      <section className="memorial-hero flex min-h-screen flex-col bg-memorial-bg">
-        <div className="relative z-10 grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-2">
+      <section className="memorial-hero flex min-h-screen flex-col overflow-hidden bg-memorial-bg">
+        <div className="memorial-hero-content flex min-h-0 flex-1 flex-col">
+        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-2">
           {/* Левая половина: рамка (размер и положение зафиксированы в globals.css) */}
-          <div className="relative flex items-end justify-start py-[var(--memorial-page-inset)] pl-[var(--memorial-page-inset)] pr-6 lg:pr-8">
-            <div className="relative w-full max-w-md lg:max-w-none">
+          <div className="relative flex items-end justify-start py-[var(--memorial-hero-padding-y)] pl-[var(--memorial-hero-padding-x)] pr-[var(--memorial-space-sm)] lg:pr-[var(--memorial-space-md)]">
+            <div className="memorial-frame-composition relative w-full max-w-md lg:max-w-none">
               <div
                 className="pointer-events-none absolute bottom-0 left-0 z-20"
                 style={{ transform: getCandleTransform() }}
@@ -71,14 +70,16 @@ export function MemorialPageView({ memorial }: MemorialPageViewProps) {
                       height: framePhotoSize.height,
                     }}
                   >
-                    <Image
-                      src={framePhoto}
-                      alt={memorial.fullName}
-                      fill
-                      className="object-cover"
-                      sizes={`${framePhotoSize.width}px`}
-                      priority
-                    />
+                    {framePhoto ? (
+                      <Image
+                        src={framePhoto}
+                        alt={memorial.fullName}
+                        fill
+                        className="object-cover"
+                        sizes={`${framePhotoSize.width}px`}
+                        priority
+                      />
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -86,12 +87,12 @@ export function MemorialPageView({ memorial }: MemorialPageViewProps) {
           </div>
 
           {/* Правая половина: текст по центру (на lg — поверх hero, не влияет на высоту grid) */}
-          <div className="flex min-h-[70vh] w-full flex-col items-center justify-center px-6 py-10 text-center lg:absolute lg:bottom-[var(--memorial-hero-bottom-strip)] lg:right-0 lg:top-0 lg:min-h-0 lg:w-1/2 lg:px-[var(--memorial-page-inset)] lg:py-[var(--memorial-page-inset)]">
+          <div className="flex min-h-[70vh] w-full -translate-y-[140px] flex-col items-center justify-center px-[var(--memorial-hero-padding-x)] py-[var(--memorial-hero-padding-y)] text-center lg:absolute lg:inset-y-0 lg:right-0 lg:min-h-0 lg:w-1/2">
             <p className="memorial-script text-3xl leading-none text-memorial-text sm:text-4xl lg:text-[2.75rem] xl:text-5xl">
               С любовью светлая память
             </p>
 
-            <div className="memorial-heading mt-8 space-y-1 text-3xl leading-tight sm:text-4xl lg:mt-10 lg:text-5xl xl:text-6xl">
+            <div className="memorial-name mt-[var(--memorial-space-sm)] space-y-[var(--memorial-space-xs)] text-3xl leading-tight sm:text-4xl lg:text-5xl xl:text-6xl">
               {nameParts.map((part, index) => (
                 <span key={`${part}-${index}`} className="block">
                   {part}
@@ -99,23 +100,17 @@ export function MemorialPageView({ memorial }: MemorialPageViewProps) {
               ))}
             </div>
 
-            <div className="mt-8 space-y-2 text-base text-memorial-text/90 sm:text-lg lg:mt-10 lg:text-xl">
-              <p className="tracking-wide">{lifeYears}</p>
-              <p>{birthFormatted}</p>
-              <p>{deathFormatted}</p>
+            <div className="mt-[var(--memorial-space-sm)] text-base text-memorial-text/90 sm:text-lg lg:text-xl">
+              <p>
+                {birthFormatted} - {deathFormatted}
+              </p>
             </div>
           </div>
         </div>
-
-        {/* «Стол» под рамкой: начинается сразу под нижним краем композиции */}
-        <div className="relative z-0 min-h-0 flex-1 bg-memorial-bg-lower" aria-hidden />
-
-        <div
-          className="relative z-10 h-[var(--memorial-hero-bottom-strip)] shrink-0 bg-memorial-bg"
-          aria-hidden
-        />
+        </div>
       </section>
 
+      <div className="pt-[var(--memorial-lower-content-offset)]">
       {memorial.epitaph && (
         <section className="mx-auto max-w-2xl px-6 py-10 text-center">
           <p className="memorial-heading text-xl italic md:text-2xl">{memorial.epitaph}</p>
@@ -131,35 +126,6 @@ export function MemorialPageView({ memorial }: MemorialPageViewProps) {
             className="space-y-4 text-base leading-7"
             dangerouslySetInnerHTML={{ __html: memorial.biography }}
           />
-        </section>
-      )}
-
-      {memorial.galleryImages.length > 0 && (
-        <section className="mx-auto max-w-4xl px-6 py-10">
-          <h2 className="mb-8 text-center text-sm font-bold uppercase tracking-wide">
-            Фотогалерея
-          </h2>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            {memorial.galleryImages.map((path) => {
-              const url = fileUrl(path);
-              if (!url) return null;
-              return (
-                <div
-                  key={path}
-                  className="overflow-hidden rounded-md border border-memorial-border bg-white shadow-[0_1px_3px_rgb(236,236,236)]"
-                >
-                  <Image
-                    src={url}
-                    alt={`Фото — ${memorial.fullName}`}
-                    width={600}
-                    height={400}
-                    className="h-64 w-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-              );
-            })}
-          </div>
         </section>
       )}
 
@@ -215,6 +181,7 @@ export function MemorialPageView({ memorial }: MemorialPageViewProps) {
       <footer className="px-6 py-10 text-center">
         <p className="text-xs uppercase tracking-widest text-memorial-text/70">mp_vobraz</p>
       </footer>
+      </div>
     </main>
   );
 }
