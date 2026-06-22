@@ -8,6 +8,13 @@
       "when": 1781816943470,
       "tag": "0000_sturdy_doorman",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1781816943471,
+      "tag": "0001_editor_blocks",
+      "breakpoints": true
     }
   ]
 }

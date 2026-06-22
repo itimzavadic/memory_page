@@ -1,187 +1,511 @@
+"use client";
+
+import { useRef, useState, type ReactNode } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
-import type { MemorialPublicData } from "@/types/memorial";
-import { fileUrl, formatDateRu, getMemorialFramePhotoSize, getVideoEmbedUrl } from "@/lib/utils";
+import type {
+  BlockElement,
+  CustomSectionType,
+  ElementType,
+  ElementsSection,
+  MemorialPublicData,
+  MemorialSection,
+  SiteSettingsData,
+} from "@/types/memorial";
+import { isCustomSection } from "@/types/memorial";
+import { fileUrl, formatDateRu, generateSlugFromName } from "@/lib/utils";
+import { SECTION_TITLES, defaultEpitaphText, canMoveCustomSection } from "@/lib/content-blocks";
+import { MemorialFooter } from "@/components/memorial/MemorialFooter";
+import { GalleryCarousel } from "@/components/memorial/GalleryCarousel";
+import { SectionElementFab } from "@/components/memorial/editor/SectionElementFab";
+import { GlobalSectionFab } from "@/components/memorial/editor/GlobalSectionFab";
+import { TextElementView } from "@/components/memorial/editor/TextElementView";
+import { PhotoElementView } from "@/components/memorial/editor/PhotoElementView";
+import { VideoElementView } from "@/components/memorial/editor/VideoElementView";
+import { ElementDeleteButton } from "@/components/memorial/editor/ElementDeleteButton";
+import { SectionReorderControls } from "@/components/memorial/editor/SectionReorderControls";
+import { ConfirmDialog } from "@/components/memorial/editor/ConfirmDialog";
+
+const CemeteryMap = dynamic(
+  () => import("@/components/memorial/CemeteryMap").then((m) => m.CemeteryMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 w-full animate-pulse rounded-md border border-memorial-border bg-memorial-bg/30" />
+    ),
+  },
+);
+
+const FRAME_IMAGE = "/assets/frame.png";
+
+export interface MemorialEditHandlers {
+  onFullNameChange: (value: string) => void;
+  onHeroTaglineChange: (value: string) => void;
+  onBirthDateChange: (value: string) => void;
+  onDeathDateChange: (value: string) => void;
+  onSlugChange: (value: string) => void;
+  onCemeteryCoordsChange: (lat: number, lng: number) => void;
+  onAddElement: (sectionId: string, type: ElementType) => void;
+  onUpdateElement: (sectionId: string, elementId: string, patch: Partial<BlockElement>) => void;
+  onRemoveElement: (sectionId: string, elementId: string) => void;
+  onSectionTitleChange: (sectionId: string, title: string) => void;
+  onGalleryChange: (sectionId: string, patch: { images?: string[]; activeIndex?: number }) => void;
+  onAddSection: (type: CustomSectionType) => void;
+  onMoveSection: (sectionId: string, direction: "up" | "down") => void;
+  onRemoveSection: (sectionId: string) => void;
+  onCoverUpload: (file: File) => void;
+  onElementPhotoUpload: (sectionId: string, elementId: string, file: File) => void;
+  onGalleryUpload: (sectionId: string, file: File) => void;
+  onGalleryRemove: (sectionId: string, path: string) => void;
+  onVideoUrlBlur: (sectionId: string, elementId: string, url: string) => void;
+}
 
 interface MemorialPageViewProps {
   memorial: MemorialPublicData;
-}
-
-const FRAME_IMAGE = "/assets/frame.png";
-const CANDLE_MOVE_DISTANCE_PX = 380;
-const CANDLE_MOVE_ANGLE_DEG = 65;
-const CANDLE_HEIGHT_PX = 350;
-const CANDLE_OFFSET_X_EXTRA_PX = 5;
-const CANDLE_OFFSET_Y_EXTRA_PX = -5;
-
-function getCandleTransform(): string {
-  const radians = (CANDLE_MOVE_ANGLE_DEG * Math.PI) / 180;
-  const offsetX = CANDLE_MOVE_DISTANCE_PX * Math.cos(radians) + CANDLE_OFFSET_X_EXTRA_PX;
-  const offsetY = -CANDLE_MOVE_DISTANCE_PX * Math.sin(radians) + CANDLE_OFFSET_Y_EXTRA_PX;
-  return `translate(calc(-28% + ${offsetX}px), calc(10% + ${offsetY}px))`;
+  siteSettings?: SiteSettingsData;
+  mode?: "view" | "edit";
+  edit?: MemorialEditHandlers;
 }
 
 function splitFullName(fullName: string): string[] {
   return fullName.trim().split(/\s+/).filter(Boolean);
 }
 
-export function MemorialPageView({ memorial }: MemorialPageViewProps) {
+function EditableText({
+  value,
+  onChange,
+  className,
+  placeholder,
+  multiline = false,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+  placeholder?: string;
+  multiline?: boolean;
+}) {
+  if (multiline) {
+    return (
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={`w-full resize-none border-0 bg-transparent text-center outline-none ring-2 ring-transparent focus:ring-memorial-accent/40 ${className ?? ""}`}
+        rows={3}
+      />
+    );
+  }
+
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className={`w-full border-0 bg-transparent text-center outline-none ring-2 ring-transparent focus:ring-memorial-accent/40 ${className ?? ""}`}
+    />
+  );
+}
+
+function SectionToolbar({
+  section,
+  isEdit,
+  sections,
+  onTitleChange,
+  onMove,
+  onAddElement,
+  onDeleteSection,
+}: {
+  section: ElementsSection;
+  isEdit: boolean;
+  sections: MemorialSection[];
+  onTitleChange?: (title: string) => void;
+  onMove?: (direction: "up" | "down") => void;
+  onAddElement?: (type: ElementType) => void;
+  onDeleteSection?: () => void;
+}) {
+  const isCustom = isCustomSection(section);
+  const defaultTitle = SECTION_TITLES[section.type];
+
+  if (section.type === "epitaph") return null;
+  if (!isEdit && section.type === "biography") return null;
+
+  const titleEl =
+    isEdit && isCustom && onTitleChange ? (
+      <input
+        type="text"
+        value={section.title}
+        onChange={(e) => onTitleChange(e.target.value)}
+        className="w-full border-0 bg-transparent text-center text-sm font-bold uppercase tracking-wide outline-none focus:ring-2 focus:ring-memorial-accent/40"
+        placeholder={defaultTitle}
+      />
+    ) : (
+      <h2 className="text-sm font-bold uppercase tracking-wide">{section.title || defaultTitle}</h2>
+    );
+
+  const showReorder = isEdit && isCustom && onMove;
+
+  return (
+    <div className="relative z-20 mb-6 flex items-center gap-2">
+      <div className="flex min-w-[6.5rem] shrink-0 justify-start">
+        {showReorder && (
+          <SectionReorderControls
+            onMove={onMove}
+            canMoveUp={canMoveCustomSection(sections, section.id, "up")}
+            canMoveDown={canMoveCustomSection(sections, section.id, "down")}
+          />
+        )}
+      </div>
+      <div className="min-w-0 flex-1 text-center">{titleEl}</div>
+      <div className="flex min-w-[2.25rem] shrink-0 justify-end">
+        {isEdit && onAddElement && (
+          <SectionElementFab
+            onAddElement={onAddElement}
+            onDeleteSection={onDeleteSection}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function GalleryToolbar({ isEdit }: { isEdit: boolean }) {
+  if (!isEdit) return null;
+  return (
+    <div className="mb-6 flex items-center gap-2">
+      <div className="w-[5.5rem] shrink-0" />
+      <h2 className="flex-1 text-center text-sm font-bold uppercase tracking-wide">Галерея</h2>
+      <div className="w-[5.5rem] shrink-0" />
+    </div>
+  );
+}
+
+function sectionWrapperClass(section: MemorialSection, isEdit: boolean): string {
+  const base = "mx-auto max-w-2xl px-6 text-center";
+  if (!isEdit && section.type === "epitaph") return `${base} pt-10 pb-2`;
+  if (!isEdit && section.type === "biography") return `${base} pt-2 pb-10`;
+  return `${base} py-10`;
+}
+
+export function MemorialPageView({
+  memorial,
+  siteSettings,
+  mode = "view",
+  edit,
+}: MemorialPageViewProps) {
+  const isEdit = mode === "edit" && !!edit;
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const [pendingSectionDelete, setPendingSectionDelete] = useState<string | null>(null);
+
   const framePhoto = fileUrl(memorial.coverPhoto);
-  const framePhotoSize = getMemorialFramePhotoSize();
   const nameParts = splitFullName(memorial.fullName);
   const birthFormatted = formatDateRu(memorial.birthDate);
   const deathFormatted = formatDateRu(memorial.deathDate);
 
+  const lat = memorial.cemeteryLat ? Number(memorial.cemeteryLat) : NaN;
+  const lng = memorial.cemeteryLng ? Number(memorial.cemeteryLng) : NaN;
+  const hasMapCoords = Number.isFinite(lat) && Number.isFinite(lng);
+
+  function renderElement(section: ElementsSection, element: BlockElement) {
+    const isEpitaphText = section.type === "epitaph" && element.type === "text";
+    const canDelete = isEdit && !isEpitaphText;
+
+    let content: ReactNode = null;
+
+    switch (element.type) {
+      case "text":
+        content = (
+          <TextElementView
+            element={element}
+            editable={isEdit}
+            variant={section.type === "epitaph" ? "epitaph" : "default"}
+            placeholder={defaultEpitaphText(memorial.fullName)}
+            onChange={(content) =>
+              edit?.onUpdateElement(section.id, element.id, { content })
+            }
+          />
+        );
+        break;
+      case "photo":
+        content = (
+          <PhotoElementView
+            element={element}
+            editable={isEdit}
+            onUpload={(file) => edit?.onElementPhotoUpload(section.id, element.id, file)}
+          />
+        );
+        break;
+      case "video":
+        content = (
+          <VideoElementView
+            element={element}
+            fullName={memorial.fullName}
+            editable={isEdit}
+            onChange={(url) => edit?.onUpdateElement(section.id, element.id, { url })}
+            onBlur={(url) => edit?.onVideoUrlBlur(section.id, element.id, url)}
+          />
+        );
+        break;
+    }
+
+    return (
+      <div key={element.id} className="relative">
+        {content}
+        {canDelete && (
+          <ElementDeleteButton
+            element={element}
+            onDelete={() => edit!.onRemoveElement(section.id, element.id)}
+          />
+        )}
+      </div>
+    );
+  }
+
+  function renderEpitaphSection(section: ElementsSection) {
+    const textEl = section.elements.find((e) => e.type === "text");
+    if (!textEl) return null;
+
+    return (
+      <section className="relative text-center">
+        <TextElementView
+          element={textEl}
+          editable={isEdit}
+          variant="epitaph"
+          placeholder={defaultEpitaphText(memorial.fullName)}
+          onChange={(content) => edit?.onUpdateElement(section.id, textEl.id, { content })}
+        />
+      </section>
+    );
+  }
+
+  function renderSection(section: MemorialSection) {
+    if (section.type === "gallery") {
+      return (
+        <section key={section.id} className="group relative">
+          <GalleryToolbar isEdit={isEdit} />
+          <GalleryCarousel
+            section={section}
+            editable={isEdit}
+            onActiveIndexChange={(index) =>
+              edit?.onGalleryChange(section.id, { activeIndex: index })
+            }
+            onUpload={(file) => edit?.onGalleryUpload(section.id, file)}
+            onRemove={(path) => edit?.onGalleryRemove(section.id, path)}
+          />
+        </section>
+      );
+    }
+
+    const elementsSection = section as ElementsSection;
+
+    if (section.type === "epitaph") {
+      return renderEpitaphSection(elementsSection);
+    }
+
+    return (
+      <section key={section.id} className="group relative text-left">
+        <SectionToolbar
+          section={elementsSection}
+          isEdit={isEdit}
+          sections={memorial.sections}
+          onTitleChange={(title) => edit?.onSectionTitleChange(section.id, title)}
+          onMove={(direction) => edit?.onMoveSection(section.id, direction)}
+          onAddElement={isEdit ? (type) => edit!.onAddElement(section.id, type) : undefined}
+          onDeleteSection={
+            isEdit && isCustomSection(section)
+              ? () => setPendingSectionDelete(section.id)
+              : undefined
+          }
+        />
+        <div className="space-y-6">
+          {elementsSection.elements.map((el) => renderElement(elementsSection, el))}
+        </div>
+        {section.type === "cemetery" && (
+          <div className="mt-6">
+            <CemeteryMap
+              lat={lat}
+              lng={lng}
+              editable={isEdit}
+              onLocationChange={(newLat, newLng) =>
+                edit?.onCemeteryCoordsChange(newLat, newLng)
+              }
+            />
+            {isEdit && !hasMapCoords && (
+              <p className="mt-2 text-center text-xs text-memorial-text/60">
+                Нажмите на карту, чтобы поставить метку
+              </p>
+            )}
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  const defaultSiteSettings: SiteSettingsData = {
+    companyText: "mp_vobraz — страницы светлой памяти",
+    partners: [],
+  };
+
   return (
     <main className="bg-memorial-bg-lower text-memorial-text">
-      <section className="memorial-hero flex min-h-screen flex-col overflow-hidden bg-memorial-bg">
-        <div className="memorial-hero-content flex min-h-0 flex-1 flex-col">
-        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-2">
-          {/* Левая половина: рамка (размер и положение зафиксированы в globals.css) */}
-          <div className="relative flex items-end justify-start py-[var(--memorial-hero-padding-y)] pl-[var(--memorial-hero-padding-x)] pr-[var(--memorial-space-sm)] lg:pr-[var(--memorial-space-md)]">
-            <div className="memorial-frame-composition relative w-full max-w-md lg:max-w-none">
-              <div
-                className="pointer-events-none absolute bottom-0 left-0 z-20"
-                style={{ transform: getCandleTransform() }}
-              >
+      <input
+        ref={coverInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file && edit) edit.onCoverUpload(file);
+          e.target.value = "";
+        }}
+      />
+
+      <section className="memorial-hero flex min-h-[100dvh] flex-col bg-memorial-bg">
+        <div className="memorial-hero-content memorial-hero-inner flex min-h-0 flex-1 flex-col">
+          <div className="memorial-hero-visual">
+            <div className="memorial-frame-composition">
+              <div className="memorial-candle pointer-events-none" aria-hidden>
                 <Image
                   src="/assets/candle.png"
                   alt=""
                   width={1500}
                   height={1280}
                   unoptimized
-                  className="h-[350px] w-auto drop-shadow-[0_4px_12px_rgba(0,0,0,0.22)]"
-                  aria-hidden
+                  className="memorial-candle-img"
+                  priority
                 />
               </div>
-              <div className="memorial-frame-fixed relative z-10">
+              <div className="memorial-frame-fixed pointer-events-none">
                 <Image
                   src={FRAME_IMAGE}
                   alt=""
                   fill
-                  className="pointer-events-none relative z-0 object-contain"
+                  className="object-contain"
                   aria-hidden
                   priority
                 />
-                <div className="absolute inset-[9%] z-20 flex items-center justify-center">
-                  <div
-                    className="relative max-h-full max-w-full"
-                    style={{
-                      width: framePhotoSize.width,
-                      height: framePhotoSize.height,
-                    }}
-                  >
-                    {framePhoto ? (
+                <div className="memorial-frame-photo pointer-events-none">
+                  {framePhoto ? (
+                    <div className="memorial-frame-photo-inner relative pointer-events-auto">
                       <Image
                         src={framePhoto}
                         alt={memorial.fullName}
                         fill
                         className="object-cover"
-                        sizes={`${framePhotoSize.width}px`}
+                        sizes="(max-width: 1023px) 85vw, 42vw"
                         priority
                       />
-                    ) : null}
-                  </div>
+                      {isEdit && (
+                        <button
+                          type="button"
+                          onClick={() => coverInputRef.current?.click()}
+                          className="absolute bottom-2 right-2 rounded bg-black/60 px-2 py-1 text-xs text-white"
+                        >
+                          Заменить
+                        </button>
+                      )}
+                    </div>
+                  ) : isEdit ? (
+                    <div className="pointer-events-auto flex h-full w-full items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={() => coverInputRef.current?.click()}
+                        className="flex h-16 w-16 items-center justify-center rounded-full bg-memorial-bg/80 text-4xl font-light text-memorial-text/50 shadow hover:text-memorial-accent"
+                        aria-label="Загрузить фото"
+                      >
+                        +
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Правая половина: текст по центру (на lg — поверх hero, не влияет на высоту grid) */}
-          <div className="flex min-h-[70vh] w-full -translate-y-[140px] flex-col items-center justify-center px-[var(--memorial-hero-padding-x)] py-[var(--memorial-hero-padding-y)] text-center lg:absolute lg:inset-y-0 lg:right-0 lg:min-h-0 lg:w-1/2">
-            <p className="memorial-script text-3xl leading-none text-memorial-text sm:text-4xl lg:text-[2.75rem] xl:text-5xl">
-              С любовью светлая память
-            </p>
+          <div className="memorial-hero-text">
+            {isEdit ? (
+              <EditableText
+                value={memorial.heroTagline}
+                onChange={(value) => edit!.onHeroTaglineChange(value)}
+                className="memorial-script memorial-hero-epigraph"
+                placeholder="Эпиграф"
+              />
+            ) : (
+              <p className="memorial-script memorial-hero-epigraph">{memorial.heroTagline}</p>
+            )}
 
-            <div className="memorial-name mt-[var(--memorial-space-sm)] space-y-[var(--memorial-space-xs)] text-3xl leading-tight sm:text-4xl lg:text-5xl xl:text-6xl">
-              {nameParts.map((part, index) => (
-                <span key={`${part}-${index}`} className="block">
-                  {part}
-                </span>
-              ))}
-            </div>
+            {isEdit ? (
+              <EditableText
+                value={memorial.fullName}
+                onChange={(value) => {
+                  edit!.onFullNameChange(value);
+                  edit!.onSlugChange(generateSlugFromName(value) || memorial.slug);
+                }}
+                className="memorial-name memorial-hero-name"
+                placeholder="ФИО"
+                multiline
+              />
+            ) : (
+              <div className="memorial-name memorial-hero-name">
+                {nameParts.map((part, index) => (
+                  <span key={`${part}-${index}`} className="block">
+                    {part}
+                  </span>
+                ))}
+              </div>
+            )}
 
-            <div className="mt-[var(--memorial-space-sm)] text-base text-memorial-text/90 sm:text-lg lg:text-xl">
-              <p>
+            {isEdit ? (
+              <div className="memorial-hero-dates flex flex-wrap items-center justify-center gap-2">
+                <input
+                  type="date"
+                  value={memorial.birthDate}
+                  onChange={(e) => edit!.onBirthDateChange(e.target.value)}
+                  className="rounded border border-memorial-border/40 bg-white/50 px-2 py-1 text-sm"
+                />
+                <span>—</span>
+                <input
+                  type="date"
+                  value={memorial.deathDate}
+                  onChange={(e) => edit!.onDeathDateChange(e.target.value)}
+                  className="rounded border border-memorial-border/40 bg-white/50 px-2 py-1 text-sm"
+                />
+              </div>
+            ) : (
+              <p className="memorial-hero-dates">
                 {birthFormatted} - {deathFormatted}
               </p>
-            </div>
+            )}
           </div>
-        </div>
         </div>
       </section>
 
-      <div className="pt-[var(--memorial-lower-content-offset)]">
-      {memorial.epitaph && (
-        <section className="mx-auto max-w-2xl px-6 py-10 text-center">
-          <p className="memorial-heading text-xl italic md:text-2xl">{memorial.epitaph}</p>
-        </section>
-      )}
-
-      {memorial.biography && (
-        <section className="mx-auto max-w-2xl px-6 py-10">
-          <h2 className="mb-6 text-center text-sm font-bold uppercase tracking-wide">
-            Биография
-          </h2>
-          <div
-            className="space-y-4 text-base leading-7"
-            dangerouslySetInnerHTML={{ __html: memorial.biography }}
-          />
-        </section>
-      )}
-
-      {memorial.videoUrls.length > 0 && (
-        <section className="mx-auto max-w-3xl px-6 py-10">
-          <h2 className="mb-8 text-center text-sm font-bold uppercase tracking-wide">
-            Видео
-          </h2>
-          <div className="space-y-6">
-            {memorial.videoUrls.map((url) => {
-              const embed = getVideoEmbedUrl(url);
-              if (embed) {
-                return (
-                  <div
-                    key={url}
-                    className="aspect-video overflow-hidden rounded-md border border-memorial-border bg-black"
-                  >
-                    <iframe
-                      src={embed}
-                      title={`Видео — ${memorial.fullName}`}
-                      className="h-full w-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  </div>
-                );
-              }
-              return (
-                <a
-                  key={url}
-                  href={url}
-                  className="block text-memorial-accent underline"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {url}
-                </a>
-              );
-            })}
+      <div className="memorial-lower-content">
+        {memorial.sections.map((section) => (
+          <div key={section.id} className={sectionWrapperClass(section, isEdit)}>
+            {renderSection(section)}
           </div>
-        </section>
-      )}
+        ))}
 
-      {memorial.cemeteryLocation && (
-        <section className="mx-auto max-w-2xl px-6 py-10 text-center">
-          <h2 className="mb-4 text-sm font-bold uppercase tracking-wide">
-            Место захоронения
-          </h2>
-          <p className="text-base">{memorial.cemeteryLocation}</p>
-        </section>
-      )}
-
-      <footer className="px-6 py-10 text-center">
-        <p className="text-xs uppercase tracking-widest text-memorial-text/70">mp_vobraz</p>
-      </footer>
+        <MemorialFooter
+          siteSettings={siteSettings ?? defaultSiteSettings}
+          publicId={memorial.publicId}
+          fullName={memorial.fullName}
+        />
       </div>
+
+      {isEdit && <GlobalSectionFab onAddSection={(type) => edit!.onAddSection(type)} />}
+
+      <ConfirmDialog
+        open={pendingSectionDelete !== null}
+        title="Удалить секцию?"
+        message="Секция и все её элементы будут удалены без возможности восстановления."
+        onConfirm={() => {
+          if (pendingSectionDelete) edit?.onRemoveSection(pendingSectionDelete);
+          setPendingSectionDelete(null);
+        }}
+        onCancel={() => setPendingSectionDelete(null)}
+      />
     </main>
   );
 }

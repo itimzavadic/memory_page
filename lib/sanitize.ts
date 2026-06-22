@@ -14,6 +14,12 @@ const allowedTags = [
   "blockquote",
 ];
 
+/** Без sanitize-html — не тянет dom-serializer в SSR-бандл публичных страниц. */
+export function sanitizePlainText(text: string | null | undefined): string {
+  if (!text) return "";
+  return text.replace(/<[^>]*>/g, "").trim();
+}
+
 export function sanitizeRichText(html: string | null | undefined): string {
   if (!html) return "";
   return sanitizeHtml(html, {
@@ -21,9 +27,4 @@ export function sanitizeRichText(html: string | null | undefined): string {
     allowedAttributes: {},
     disallowedTagsMode: "discard",
   });
-}
-
-export function sanitizePlainText(text: string | null | undefined): string {
-  if (!text) return "";
-  return sanitizeHtml(text, { allowedTags: [], allowedAttributes: {} });
 }

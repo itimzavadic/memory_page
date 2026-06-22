@@ -40,6 +40,8 @@ export async function POST(request: Request) {
     await updateCoverPhoto(memorialId, upload.path);
   } else if (type === "gallery") {
     await addGalleryImage(memorialId, upload.path);
+  } else if (type === "element-photo") {
+    // element-photo is stored in sections JSON via client autosave; no DB column update needed
   } else {
     return NextResponse.json({ error: "Invalid upload type" }, { status: 400 });
   }

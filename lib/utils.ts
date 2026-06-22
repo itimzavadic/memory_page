@@ -1,3 +1,5 @@
+import slugify from "slugify";
+
 const CHARSET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 export function generatePublicId(length = 8): string {
@@ -6,6 +8,10 @@ export function generatePublicId(length = 8): string {
     result += CHARSET[Math.floor(Math.random() * CHARSET.length)];
   }
   return result;
+}
+
+export function generateSlugFromName(fullName: string): string {
+  return slugify(fullName, { lower: true, strict: true, locale: "ru" });
 }
 
 export function getMemorialFramePhotoSize(): { width: number; height: number } {

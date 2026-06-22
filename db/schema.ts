@@ -18,12 +18,16 @@ export const memorialPages = sqliteTable(
     fullName: text("full_name").notNull(),
     birthDate: text("birth_date").notNull(),
     deathDate: text("death_date").notNull(),
+    heroTagline: text("hero_tagline").default("С любовью светлая память"),
     epitaph: text("epitaph"),
     biography: text("biography"),
     coverPhoto: text("cover_photo"),
     galleryImages: text("gallery_images").notNull().default("[]"),
     videoUrls: text("video_urls").notNull().default("[]"),
+    contentBlocks: text("content_blocks").notNull().default("[]"),
     cemeteryLocation: text("cemetery_location"),
+    cemeteryLat: text("cemetery_lat"),
+    cemeteryLng: text("cemetery_lng"),
     qrCodePngPath: text("qr_code_png_path"),
     qrCodeSvgPath: text("qr_code_svg_path"),
     qrTargetUrl: text("qr_target_url"),
@@ -46,6 +50,16 @@ export const memorialPages = sqliteTable(
   ],
 );
 
+export const siteSettings = sqliteTable("site_settings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  companyText: text("company_text"),
+  partnersJson: text("partners_json").notNull().default("[]"),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
 export type User = typeof users.$inferSelect;
 export type MemorialPage = typeof memorialPages.$inferSelect;
 export type NewMemorialPage = typeof memorialPages.$inferInsert;
+export type SiteSettings = typeof siteSettings.$inferSelect;

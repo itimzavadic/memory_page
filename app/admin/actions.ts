@@ -2,17 +2,20 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { loginSchema, memorialSchema } from "@/lib/validators";
+import { loginSchema, memorialSchema, memorialAutosaveSchema } from "@/lib/validators";
 import { loginUser } from "@/services/auth.service";
+import { generateSlugFromName } from "@/lib/utils";
 import {
+  autosaveMemorial,
+  createDraftMemorial,
   createMemorial,
   updateMemorial,
   deleteMemorial,
   publishMemorial,
   unpublishMemorial,
   regenerateQr,
-  generateSlugFromName,
 } from "@/services/memorial.service";
+import type { MemorialSection } from "@/types/memorial";
 import { parseJsonArray } from "@/lib/utils";
 
 function parseVideoUrls(raw: string | null): string[] {
@@ -69,6 +72,16 @@ export async function loginAction(formData: FormData) {
   redirect("/admin/dashboard");
 }
 
+export async function createDraftMemorialAction() {
+  const result = await createDraftMemorial();
+  if (!result.success || !result.id) {
+    redirect("/admin/memorials?error=create");
+  }
+
+  revalidatePath("/admin/memorials");
+  redirect(`/admin/memorials/${result.id}/edit`);
+}
+
 export async function createMemorialAction(formData: FormData) {
   const parsed = parseMemorialForm(formData);
   if (!parsed.success) {
@@ -83,6 +96,42 @@ export async function createMemorialAction(formData: FormData) {
   revalidatePath("/admin/memorials");
   revalidatePath("/admin/dashboard");
   redirect(`/admin/memorials/${result.id}/edit`);
+}
+
+export async function autosaveMemorialAction(
+  id: number,
+  payload: {
+    fullName: string;
+    slug: string;
+    birthDate: string;
+    deathDate: string;
+    heroTagline?: string;
+    cemeteryLocation?: string;
+    cemeteryLat?: string | null;
+    cemeteryLng?: string | null;
+    sections: MemorialSection[];
+  },
+): Promise<{ success: boolean; error?: string }> {
+  const parsed = memorialAutosaveSchema.safeParse({
+    ...payload,
+    sections: payload.sections,
+  });
+
+  if (!parsed.success) {
+    return { success: false, error: "Ошибка валидации" };
+  }
+
+  const result = await autosaveMemorial(id, {
+    ...parsed.data,
+    sections: payload.sections,
+  });
+
+  if (result.success) {
+    revalidatePath(`/admin/memorials/${id}/edit`);
+    revalidatePath("/admin/memorials");
+  }
+
+  return result;
 }
 
 export async function updateMemorialAction(id: number, formData: FormData) {

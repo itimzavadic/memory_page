@@ -4,6 +4,7 @@ import { MemorialPageView } from "@/components/memorial/MemorialPageView";
 import { getMemorialBySlug } from "@/services/memorial.service";
 import { fileUrl, getSiteUrl } from "@/lib/utils";
 import { sanitizePlainText } from "@/lib/sanitize";
+import { getSiteSettings } from "@/services/site.service";
 
 export async function generateMetadata({
   params,
@@ -46,5 +47,7 @@ export default async function SlugMemorialPage({
   const memorial = await getMemorialBySlug(slug);
   if (!memorial) notFound();
 
-  return <MemorialPageView memorial={memorial} />;
+  const siteSettings = await getSiteSettings();
+
+  return <MemorialPageView memorial={memorial} siteSettings={siteSettings} />;
 }

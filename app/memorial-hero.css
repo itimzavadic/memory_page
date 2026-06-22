@@ -1,0 +1,338 @@
+/*
+  MEMORIAL HERO — словарь метрик (общаемся так):
+
+  MOBILE (<1024px), единицы: px и %
+  ─────────────────────────────────
+  frame-overflow     — на сколько рамка выступает за край экрана с КАЖДОЙ стороны (140px)
+  frame-width-add    — на сколько рамка шире слота суммарно (280px)
+  frame-margin       — отрицательный отступ рамки (-140px)
+  candle-width       — ширина свечи от ширины слота (42%)
+  candle-scale       — 1.48
+  candle-offset-x/y  — смещение 120px под углом 70° (-41px, 113px)
+  candle-shift-x/y   — базовый сдвиг (-8%, -14%)
+  text-frame-gap     — зазор между текстом и рамкой (24px)
+  text-padding-x     — боковые отступы текста (16–40px)
+  frame-pos-y         — сдвиг блока рамки и свечи вниз (200px)
+
+  DESKTOP (≥1024px), layout в px
+  ───────────────────────────────
+  page-margin        — отступ hero от краёв экрана (57px)
+  viewport-h         — рабочая высота: 100dvh − 114px
+  frame-border       — «толщина» декора рамки со всех сторон (329px)
+  frame-out-top      — рамка выступает вверх от слота (397px)
+  frame-out-left     — рамка выступает влево (76px)
+  frame-out-right    — доп. ширина справа (265px)
+  frame-pos-y        — сдвиг блока рамки вниз (222px)
+  frame-width-extra  — добавка к ширине: 329×2+265+76 = 999px
+  frame-height-extra — добавка к высоте: 329×2+397 = 1055px
+  candle-width       — 22% от блока рамки
+  candle-scale       — 1.51
+  candle-pos-x/y     — 278px, 591px
+  candle-offset-x/y  — смещение 120px под углом 70° (-41px, 113px)
+  text-lift          — подъём текстового блока (-100px)
+  shelf-gap          — мобайл: светлая зона hero снизу (210px), больше = тёмный фон ниже
+  shelf-top          — десктоп: линия тёмного фона (50%+970px)
+*/
+
+/* ── Mobile tokens ── */
+:root {
+  --hero-m-frame-overflow: 140px;
+  --hero-m-frame-width-add: 280px;
+  --hero-m-frame-margin: -140px;
+  --hero-m-frame-aspect: 9 / 8;
+  --hero-m-photo-inset: 9%;
+  --hero-m-photo-aspect: 492 / 680;
+
+  --hero-m-candle-width: 42%;
+  --hero-m-candle-scale: 1.48;
+  --hero-m-candle-shift-x: -8%;
+  --hero-m-candle-shift-y: -14%;
+  --hero-m-candle-offset-x: -56px;
+  --hero-m-candle-offset-y: 113px;
+
+  --hero-m-text-frame-gap: 24px;
+  --hero-m-text-padding-x: clamp(16px, 5vw, 40px);
+  --hero-m-hero-padding-y: clamp(16px, 4vw, 24px);
+  --hero-m-hero-padding-bottom: clamp(24px, 5vw, 40px);
+  --hero-m-shelf-gap: 185px;
+  --hero-m-frame-pos-y: 200px;
+
+  --hero-m-epigraph-size: clamp(34px, 8.5vw, 44px);
+  --hero-m-name-size: clamp(32px, 10vw, 40px);
+  --hero-m-name-gap: 8px;
+  --hero-m-name-margin-top: 12px;
+  --hero-m-dates-size: clamp(17px, 4.5vw, 20px);
+  --hero-m-dates-margin-top: 16px;
+
+  --hero-m-text-lift: 40px;
+  --hero-m-lower-content-pad: 100px;
+}
+
+/* ── Desktop tokens ── */
+@media (min-width: 1024px) {
+  :root {
+    --hero-d-page-margin: 57px;
+    --hero-d-viewport-h: calc(100dvh - 114px);
+
+    --hero-d-frame-border: 329px;
+    --hero-d-frame-out-top: 397px;
+    --hero-d-frame-out-left: 76px;
+    --hero-d-frame-out-right: 265px;
+    --hero-d-frame-margin-top: -397px;
+    --hero-d-frame-margin-left: -76px;
+    --hero-d-frame-pos-y: 222px;
+    --hero-d-frame-width-extra: 999px;
+    --hero-d-frame-height-extra: 1055px;
+
+    --hero-d-candle-width: 22%;
+    --hero-d-candle-scale: 1.51;
+    --hero-d-candle-pos-x: 278px;
+    --hero-d-candle-pos-y: 591px;
+    --hero-d-candle-offset-x: -56px;
+    --hero-d-candle-offset-y: 113px;
+
+    --hero-d-text-lift: -100px;
+    --hero-d-text-max-width: 544px;
+    --hero-d-text-frame-gap: clamp(16px, 2vw, 32px);
+    --hero-d-hero-padding-x: clamp(16px, 5vw, 40px);
+    --hero-d-hero-padding-y: clamp(16px, 4vw, 24px);
+
+    --hero-d-shelf-top: calc(50% + 945px);
+    --hero-d-lower-content-pad: 250px;
+
+    --hero-d-epigraph-size: clamp(36px, 2.8vw, 48px);
+    --hero-d-name-size: clamp(40px, 3.5vw, 60px);
+    --hero-d-name-gap: 16px;
+    --hero-d-name-margin-top: 16px;
+    --hero-d-dates-size: clamp(16px, 1.4vw, 20px);
+    --hero-d-dates-margin-top: 24px;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --hero-d-epigraph-size: 44px;
+    --hero-d-name-size: 60px;
+  }
+}
+
+/* ── Layout ── */
+
+.memorial-hero {
+  position: relative;
+  overflow-x: clip;
+  padding-bottom: var(--hero-m-shelf-gap);
+}
+
+.memorial-hero::before {
+  content: none;
+}
+
+.memorial-hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+.memorial-hero-inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hero-m-text-frame-gap);
+  padding: var(--hero-m-hero-padding-y) 0 var(--hero-m-hero-padding-bottom);
+}
+
+.memorial-hero-text {
+  order: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  width: 100%;
+  padding-inline: var(--hero-m-text-padding-x);
+  transform: translateY(var(--hero-m-text-lift));
+}
+
+.memorial-hero-visual {
+  order: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  flex-shrink: 0;
+  overflow-x: clip;
+}
+
+.memorial-frame-composition {
+  position: relative;
+  width: 100%;
+  transform: translateY(var(--hero-m-frame-pos-y));
+}
+
+.memorial-candle {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: var(--hero-m-candle-width);
+  z-index: 20;
+  transform: translate(
+      calc(var(--hero-m-candle-shift-x) + var(--hero-m-candle-offset-x)),
+      calc(var(--hero-m-candle-shift-y) + var(--hero-m-candle-offset-y))
+    )
+    scale(var(--hero-m-candle-scale));
+  transform-origin: bottom left;
+}
+
+.memorial-candle-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 4px 12px rgb(0 0 0 / 0.22));
+}
+
+.memorial-frame-fixed {
+  position: relative;
+  width: calc(100% + var(--hero-m-frame-width-add));
+  aspect-ratio: var(--hero-m-frame-aspect);
+  margin: var(--hero-m-frame-margin);
+}
+
+.memorial-frame-photo {
+  position: absolute;
+  inset: var(--hero-m-photo-inset);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.memorial-frame-photo-inner {
+  position: relative;
+  height: 100%;
+  max-width: 100%;
+  aspect-ratio: var(--hero-m-photo-aspect);
+}
+
+.memorial-hero-epigraph {
+  margin: 0;
+  font-size: var(--hero-m-epigraph-size);
+  line-height: 1.05;
+}
+
+.memorial-hero-name {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: var(--hero-m-name-margin-top);
+  font-size: var(--hero-m-name-size);
+  line-height: 1.08;
+  gap: var(--hero-m-name-gap);
+}
+
+.memorial-hero-dates {
+  margin: var(--hero-m-dates-margin-top) 0 0;
+  font-size: var(--hero-m-dates-size);
+  line-height: 1.4;
+  color: rgb(104 85 76 / 0.9);
+}
+
+.memorial-lower-content {
+  padding-top: var(--hero-m-lower-content-pad);
+}
+
+/* ── Desktop layout ── */
+
+@media (min-width: 1024px) {
+  .memorial-hero::before {
+    top: var(--hero-d-shelf-top);
+  }
+
+  .memorial-hero {
+    overflow: hidden;
+    padding-bottom: 0;
+  }
+
+  .memorial-hero::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: var(--hero-d-shelf-top);
+    background-color: var(--color-memorial-bg-lower);
+    pointer-events: none;
+  }
+
+  .memorial-hero-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: var(--hero-d-text-frame-gap);
+    padding: var(--hero-d-hero-padding-y) var(--hero-d-hero-padding-x) 0;
+    min-height: 100dvh;
+  }
+
+  .memorial-hero-text {
+    order: 2;
+    justify-content: center;
+    align-self: center;
+    justify-self: center;
+    max-width: var(--hero-d-text-max-width);
+    padding-inline: 0;
+    transform: translateY(var(--hero-d-text-lift));
+  }
+
+  .memorial-hero-visual {
+    order: 1;
+    justify-content: flex-start;
+    align-items: flex-end;
+    align-self: end;
+    padding-bottom: var(--hero-d-hero-padding-y);
+  }
+
+  .memorial-frame-composition {
+    width: auto;
+    transform: translateY(var(--hero-d-frame-pos-y));
+  }
+
+  .memorial-candle {
+    width: var(--hero-d-candle-width);
+    transform: translate(
+        calc(-28% + var(--hero-d-candle-pos-x) + var(--hero-d-candle-offset-x)),
+        calc(10% - var(--hero-d-candle-pos-y) + var(--hero-d-candle-offset-y))
+      )
+      scale(var(--hero-d-candle-scale));
+  }
+
+  .memorial-frame-fixed {
+    aspect-ratio: auto;
+    width: calc(var(--hero-d-viewport-h) * 0.75 + var(--hero-d-frame-width-extra));
+    height: calc(var(--hero-d-viewport-h) + var(--hero-d-frame-height-extra));
+    max-width: calc(85% + var(--hero-d-frame-width-extra));
+    margin-top: var(--hero-d-frame-margin-top);
+    margin-left: var(--hero-d-frame-margin-left);
+    margin-right: auto;
+    margin-bottom: 0;
+  }
+
+  .memorial-hero-epigraph {
+    font-size: var(--hero-d-epigraph-size);
+    line-height: 1.1;
+  }
+
+  .memorial-hero-name {
+    margin-top: var(--hero-d-name-margin-top);
+    font-size: var(--hero-d-name-size);
+    line-height: 1.18;
+    gap: var(--hero-d-name-gap);
+  }
+
+  .memorial-hero-dates {
+    margin-top: var(--hero-d-dates-margin-top);
+    font-size: var(--hero-d-dates-size);
+  }
+
+  .memorial-lower-content {
+    padding-top: var(--hero-d-lower-content-pad);
+  }
+}

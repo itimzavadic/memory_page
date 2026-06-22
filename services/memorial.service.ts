@@ -1,11 +1,23 @@
 import { eq, desc, and } from "drizzle-orm";
-import slugify from "slugify";
 import { db } from "@/db";
 import { memorialPages, type MemorialPage } from "@/db/schema";
-import { generatePublicId, parseJsonArray } from "@/lib/utils";
+import { generatePublicId, parseJsonArray, generateSlugFromName } from "@/lib/utils";
+import {
+  createDefaultSections,
+  createId,
+  sectionsFromMemorial,
+  syncLegacyFieldsFromSections,
+} from "@/lib/content-blocks";
 import { sanitizePlainText, sanitizeRichText } from "@/lib/sanitize";
-import type { MemorialInput } from "@/lib/validators";
-import type { MemorialListItem, MemorialPublicData } from "@/types/memorial";
+import type { MemorialInput, MemorialAutosaveInput } from "@/lib/validators";
+import type {
+  BlockElement,
+  GallerySection,
+  MemorialEditorData,
+  MemorialListItem,
+  MemorialPublicData,
+  MemorialSection,
+} from "@/types/memorial";
 import {
   deleteOldQrFiles,
   generateQrFiles,
@@ -15,6 +27,9 @@ import {
 } from "@/services/upload.service";
 
 function mapToPublicData(page: MemorialPage): MemorialPublicData {
+  const sections = sectionsFromMemorial(page);
+  const legacy = syncLegacyFieldsFromSections(sections);
+
   return {
     id: page.id,
     publicId: page.publicId,
@@ -22,18 +37,29 @@ function mapToPublicData(page: MemorialPage): MemorialPublicData {
     fullName: page.fullName,
     birthDate: page.birthDate,
     deathDate: page.deathDate,
-    epitaph: page.epitaph,
-    biography: page.biography,
+    heroTagline: page.heroTagline ?? "С любовью светлая память",
+    epitaph: legacy.epitaph ?? page.epitaph,
+    biography: legacy.biography ?? page.biography,
     coverPhoto: page.coverPhoto,
-    galleryImages: parseJsonArray(page.galleryImages),
-    videoUrls: parseJsonArray(page.videoUrls),
-    cemeteryLocation: page.cemeteryLocation,
+    galleryImages: legacy.galleryImages.length
+      ? legacy.galleryImages
+      : parseJsonArray(page.galleryImages),
+    videoUrls: legacy.videoUrls.length ? legacy.videoUrls : parseJsonArray(page.videoUrls),
+    sections,
+    cemeteryLocation: legacy.cemeteryLocation ?? page.cemeteryLocation,
+    cemeteryLat: page.cemeteryLat,
+    cemeteryLng: page.cemeteryLng,
     isPublished: page.isPublished,
   };
 }
 
-export function generateSlugFromName(fullName: string): string {
-  return slugify(fullName, { lower: true, strict: true, locale: "ru" });
+export function mapToEditorData(page: MemorialPage): MemorialEditorData {
+  return {
+    ...mapToPublicData(page),
+    qrCodePngPath: page.qrCodePngPath,
+    qrCodeSvgPath: page.qrCodeSvgPath,
+    qrTargetUrl: page.qrTargetUrl,
+  };
 }
 
 export async function listMemorials(): Promise<MemorialListItem[]> {
@@ -59,6 +85,12 @@ export async function getMemorialById(id: number): Promise<MemorialPage | null> 
     .where(eq(memorialPages.id, id))
     .limit(1);
   return row ?? null;
+}
+
+export async function getMemorialEditorData(id: number): Promise<MemorialEditorData | null> {
+  const page = await getMemorialById(id);
+  if (!page) return null;
+  return mapToEditorData(page);
 }
 
 export async function getMemorialByPublicId(
@@ -131,6 +163,64 @@ async function ensureUniqueSlug(baseSlug: string, excludeId?: number): Promise<s
   }
 }
 
+function sanitizeElement(element: BlockElement): BlockElement {
+  switch (element.type) {
+    case "text":
+      return { ...element, content: sanitizePlainText(element.content) };
+    case "photo":
+      return element;
+    case "video":
+      return { ...element, url: element.url.trim() };
+  }
+}
+
+function sanitizeSections(sections: MemorialSection[]): MemorialSection[] {
+  return sections.map((section) => {
+    if (section.type === "gallery") {
+      return {
+        ...section,
+        images: section.images.filter((img) => typeof img === "string"),
+        activeIndex: Math.min(
+          Math.max(0, section.activeIndex),
+          Math.max(0, section.images.length - 1),
+        ),
+      };
+    }
+    return {
+      ...section,
+      title: sanitizePlainText(section.title),
+      elements: section.elements.map(sanitizeElement),
+    };
+  });
+}
+
+export async function createDraftMemorial(): Promise<{ success: boolean; id?: number }> {
+  const fullName = "Имя Фамилия";
+  const slug = await ensureUniqueSlug(generateSlugFromName(fullName) || "novaya-stranica");
+  const sections = createDefaultSections();
+  const legacy = syncLegacyFieldsFromSections(sections);
+  const year = new Date().getFullYear();
+
+  const [created] = await db
+    .insert(memorialPages)
+    .values({
+      slug,
+      fullName,
+      birthDate: `${year - 70}-01-01`,
+      deathDate: `${year}-01-01`,
+      heroTagline: "С любовью светлая память",
+      epitaph: legacy.epitaph,
+      biography: legacy.biography,
+      galleryImages: JSON.stringify(legacy.galleryImages),
+      videoUrls: JSON.stringify(legacy.videoUrls),
+      contentBlocks: JSON.stringify(sections),
+      updatedAt: new Date(),
+    })
+    .returning({ id: memorialPages.id });
+
+  return { success: true, id: created.id };
+}
+
 export async function createMemorial(
   input: MemorialInput,
 ): Promise<{ success: boolean; id?: number; error?: string }> {
@@ -147,11 +237,48 @@ export async function createMemorial(
       biography: sanitizeRichText(input.biography),
       cemeteryLocation: sanitizePlainText(input.cemeteryLocation),
       videoUrls: JSON.stringify(input.videoUrls ?? []),
+      contentBlocks: JSON.stringify(createDefaultSections()),
       updatedAt: new Date(),
     })
     .returning({ id: memorialPages.id });
 
   return { success: true, id: created.id };
+}
+
+export async function autosaveMemorial(
+  id: number,
+  input: MemorialAutosaveInput & { sections?: MemorialSection[] },
+): Promise<{ success: boolean; error?: string }> {
+  const existing = await getMemorialById(id);
+  if (!existing) return { success: false, error: "Страница не найдена" };
+
+  const slug = await ensureUniqueSlug(input.slug, id);
+  const sections = sanitizeSections(
+    input.sections ?? sectionsFromMemorial(existing),
+  );
+  const legacy = syncLegacyFieldsFromSections(sections);
+
+  await db
+    .update(memorialPages)
+    .set({
+      slug,
+      fullName: sanitizePlainText(input.fullName),
+      birthDate: input.birthDate,
+      deathDate: input.deathDate,
+      heroTagline: sanitizePlainText(input.heroTagline ?? existing.heroTagline ?? ""),
+      epitaph: legacy.epitaph,
+      biography: legacy.biography,
+      cemeteryLocation: legacy.cemeteryLocation,
+      cemeteryLat: input.cemeteryLat?.trim() || null,
+      cemeteryLng: input.cemeteryLng?.trim() || null,
+      galleryImages: JSON.stringify(legacy.galleryImages),
+      videoUrls: JSON.stringify(legacy.videoUrls),
+      contentBlocks: JSON.stringify(sections),
+      updatedAt: new Date(),
+    })
+    .where(eq(memorialPages.id, id));
+
+  return { success: true };
 }
 
 export async function updateMemorial(
@@ -301,13 +428,26 @@ export async function addGalleryImage(
   const existing = await getMemorialById(id);
   if (!existing) return { success: false, error: "Страница не найдена" };
 
-  const gallery = parseJsonArray(existing.galleryImages);
-  gallery.push(relativePath);
+  const sections = sectionsFromMemorial(existing);
+  const gallerySection = sections.find((s) => s.type === "gallery") as GallerySection | undefined;
+  const images = gallerySection ? [...gallerySection.images, relativePath] : [relativePath];
+
+  const updatedSections = gallerySection
+    ? sections.map((s) =>
+        s.type === "gallery" ? { ...s, images, activeIndex: images.length - 1 } : s,
+      )
+    : [
+        ...sections,
+        { id: createId(), type: "gallery" as const, images, activeIndex: 0 },
+      ];
+
+  const legacy = syncLegacyFieldsFromSections(updatedSections);
 
   await db
     .update(memorialPages)
     .set({
-      galleryImages: JSON.stringify(gallery),
+      galleryImages: JSON.stringify(legacy.galleryImages),
+      contentBlocks: JSON.stringify(updatedSections),
       updatedAt: new Date(),
     })
     .where(eq(memorialPages.id, id));
@@ -322,16 +462,24 @@ export async function removeGalleryImage(
   const existing = await getMemorialById(id);
   if (!existing) return { success: false, error: "Страница не найдена" };
 
-  const gallery = parseJsonArray(existing.galleryImages).filter(
-    (item) => item !== relativePath,
-  );
+  const sections = sectionsFromMemorial(existing).map((section) => {
+    if (section.type !== "gallery") return section;
+    const images = section.images.filter((img) => img !== relativePath);
+    return {
+      ...section,
+      images,
+      activeIndex: Math.min(section.activeIndex, Math.max(0, images.length - 1)),
+    };
+  });
 
+  const legacy = syncLegacyFieldsFromSections(sections);
   await deleteUploadedFile(relativePath);
 
   await db
     .update(memorialPages)
     .set({
-      galleryImages: JSON.stringify(gallery),
+      galleryImages: JSON.stringify(legacy.galleryImages),
+      contentBlocks: JSON.stringify(sections),
       updatedAt: new Date(),
     })
     .where(eq(memorialPages.id, id));

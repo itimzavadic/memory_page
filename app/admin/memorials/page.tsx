@@ -13,7 +13,7 @@ export default async function AdminMemorialsPage() {
         title="Страницы памяти"
         actions={
           <Link
-            href="/admin/memorials/new"
+            href="/admin/memorials/create"
             className="rounded bg-memorial-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90"
           >
             Создать

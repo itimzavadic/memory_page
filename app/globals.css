@@ -5,36 +5,27 @@
   --color-memorial-accent: rgb(28 152 160);
   --color-memorial-bg: rgb(241 231 221);
   --color-memorial-bg-lower: #cec2b8;
-  --memorial-hero-lower-rise: -140px;
-  --memorial-lower-content-offset: 150px;
   --color-memorial-border: rgb(193 169 141);
   --color-memorial-error: rgb(128 34 34);
   --color-memorial-card: rgb(255 255 255);
   --font-serif: Georgia, "Times New Roman", serif;
   --font-sans: var(--font-inter), Inter, Helvetica, Arial, sans-serif;
-  --memorial-page-inset: 1.5cm;
-  --memorial-space-xs: 8px;
-  --memorial-space-sm: 20px;
-  --memorial-space-md: 40px;
-  --memorial-hero-padding-x: var(--memorial-space-md);
-  --memorial-hero-padding-y: var(--memorial-space-sm);
 
-  /*
-   * Рамка hero — зафиксировано (v1). Не менять без явного запроса.
-   * symmetric: +5cm со всех сторон от базового размера
-   * offset-top: +10.5cm вверх | offset-right: +7cm вправо | offset-left: +2cm влево
-   */
-  --memorial-frame-symmetric: 5cm;
-  --memorial-frame-offset-top: 10.5cm;
-  --memorial-frame-offset-right: 7cm;
-  --memorial-frame-offset-left: 2cm;
-  --memorial-frame-offset-y: calc(-1cm + 60px);
+  /* Mobile-first spacing (4px base scale) */
+  --memorial-space-2xs: 0.25rem;
+  --memorial-space-xs: 0.75rem;
+  --memorial-space-sm: 1rem;
+  --memorial-space-md: 1.5rem;
+  --memorial-space-lg: 2rem;
 }
+
+@import "./memorial-hero.css";
 
 body {
   background-color: var(--color-memorial-bg);
   color: var(--color-memorial-text);
   font-family: var(--font-sans);
+  overflow-x: clip;
 }
 
 .memorial-script {
@@ -55,61 +46,6 @@ body {
   font-feature-settings: "liga" 1;
 }
 
-.memorial-hero {
-  position: relative;
-}
-
-.memorial-hero::before {
-  content: "";
-  position: absolute;
-  z-index: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  top: calc(50% - var(--memorial-hero-lower-rise));
-  background-color: var(--color-memorial-bg-lower);
-  pointer-events: none;
-}
-
-.memorial-hero-content {
-  position: relative;
-  z-index: 1;
-}
-
-/* Зафиксированная рамка на левой половине hero */
-.memorial-frame-composition {
-  transform: translateY(var(--memorial-frame-offset-y));
-}
-
-.memorial-frame-fixed {
-  position: relative;
-  --frame-base-h: min(70dvh, calc(100dvh - 2 * var(--memorial-page-inset)));
-  height: calc(
-    var(--frame-base-h) + 2 * var(--memorial-frame-symmetric) + var(--memorial-frame-offset-top)
-  );
-  width: calc(
-    var(--frame-base-h) * 3 / 4 + 2 * var(--memorial-frame-symmetric) +
-      var(--memorial-frame-offset-right) + var(--memorial-frame-offset-left)
-  );
-  max-width: calc(
-    min(100%, 42vw) + 2 * var(--memorial-frame-symmetric) + var(--memorial-frame-offset-right) +
-      var(--memorial-frame-offset-left)
-  );
-  margin-top: calc(-1 * var(--memorial-frame-offset-top));
-  margin-left: calc(-1 * var(--memorial-frame-offset-left));
-  margin-right: auto;
-}
-
-@media (min-width: 1024px) {
-  .memorial-frame-fixed {
-    --frame-base-h: calc(100dvh - 2 * var(--memorial-page-inset));
-    max-width: calc(
-      85% + 2 * var(--memorial-frame-symmetric) + var(--memorial-frame-offset-right) +
-        var(--memorial-frame-offset-left)
-    );
-  }
-}
-
 .admin-shell {
   min-height: 100vh;
   background: #f5f5f4;
@@ -120,4 +56,32 @@ body {
   border: 1px solid #e7e5e4;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+}
+
+.memorial-epitaph {
+  font-family: var(--font-memorial-name), "Vollkorn SC", Georgia, "Times New Roman", serif;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  font-size: clamp(2.25rem, 12vw, 3.25rem);
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.memorial-map-container .leaflet-container {
+  z-index: 0 !important;
+}
+
+.memorial-panel-enter {
+  animation: memorial-panel-in 0.2s ease-out;
+}
+
+@keyframes memorial-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
