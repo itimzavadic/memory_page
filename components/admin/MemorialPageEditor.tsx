@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { MemorialPageView } from "@/components/memorial/MemorialPageView";
+import { CoverPhotoCropDialog } from "@/components/memorial/editor/CoverPhotoCropDialog";
 import { QrSection } from "@/components/admin/QrSection";
 import { autosaveMemorialAction } from "@/app/admin/actions";
 import {
@@ -45,6 +46,7 @@ export function MemorialPageEditor({
   const [data, setData] = useState(initialData);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [showSettings, setShowSettings] = useState(false);
+  const [coverCropFile, setCoverCropFile] = useState<File | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const saveNow = useCallback(async (payload: MemorialEditorData) => {
@@ -172,10 +174,7 @@ export function MemorialPageEditor({
     onRemoveSection: (sectionId: string) => {
       updateSections((sections) => removeCustomSection(sections, sectionId));
     },
-    onCoverUpload: async (file: File) => {
-      const path = await uploadFile(file, "cover");
-      if (path) updateData({ coverPhoto: path });
-    },
+    onCoverFileSelect: (file: File) => setCoverCropFile(file),
     onElementPhotoUpload: async (sectionId: string, elementId: string, file: File) => {
       const path = await uploadFile(file, "element-photo", { sectionId, elementId });
       if (!path) return;
@@ -235,7 +234,7 @@ export function MemorialPageEditor({
   return (
     <div className="relative">
       <div className="sticky top-0 z-50 border-b border-stone-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-3 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-4">
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/admin/memorials"
@@ -270,19 +269,19 @@ export function MemorialPageEditor({
               </span>
             )}
             {data.isPublished ? (
-              <form action={unpublishAction}>
+              <form action={unpublishAction} className="w-full sm:w-auto">
                 <button
                   type="submit"
-                  className="rounded border border-amber-300 px-3 py-1.5 text-sm text-amber-800 hover:bg-amber-50"
+                  className="w-full rounded border border-amber-300 px-3 py-1.5 text-sm text-amber-800 hover:bg-amber-50 sm:w-auto"
                 >
                   Снять с публикации
                 </button>
               </form>
             ) : (
-              <form action={publishAction}>
+              <form action={publishAction} className="w-full sm:w-auto">
                 <button
                   type="submit"
-                  className="rounded bg-green-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-green-800"
+                  className="w-full rounded bg-green-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-green-800 sm:w-auto"
                 >
                   Опубликовать
                 </button>
@@ -328,6 +327,18 @@ export function MemorialPageEditor({
       </div>
 
       <MemorialPageView memorial={data} mode="edit" edit={editHandlers} />
+
+      <CoverPhotoCropDialog
+        file={coverCropFile}
+        open={coverCropFile !== null}
+        onCancel={() => setCoverCropFile(null)}
+        onConfirm={async (blob) => {
+          const file = new File([blob], "cover.jpg", { type: "image/jpeg" });
+          const path = await uploadFile(file, "cover");
+          if (path) updateData({ coverPhoto: path });
+          setCoverCropFile(null);
+        }}
+      />
     </div>
   );
 }

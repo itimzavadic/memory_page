@@ -53,7 +53,7 @@ export interface MemorialEditHandlers {
   onAddSection: (type: CustomSectionType) => void;
   onMoveSection: (sectionId: string, direction: "up" | "down") => void;
   onRemoveSection: (sectionId: string) => void;
-  onCoverUpload: (file: File) => void;
+  onCoverFileSelect: (file: File) => void;
   onElementPhotoUpload: (sectionId: string, elementId: string, file: File) => void;
   onGalleryUpload: (sectionId: string, file: File) => void;
   onGalleryRemove: (sectionId: string, path: string) => void;
@@ -67,8 +67,13 @@ interface MemorialPageViewProps {
   edit?: MemorialEditHandlers;
 }
 
-function splitFullName(fullName: string): string[] {
-  return fullName.trim().split(/\s+/).filter(Boolean);
+function fullNameToThreeLines(fullName: string): [string, string, string] {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  return [parts[0] ?? "", parts[1] ?? "", parts.slice(2).join(" ")];
+}
+
+function threeLinesToFullName(lines: [string, string, string]): string {
+  return lines.map((part) => part.trim()).filter(Boolean).join(" ");
 }
 
 function EditableText({
@@ -146,8 +151,8 @@ function SectionToolbar({
   const showReorder = isEdit && isCustom && onMove;
 
   return (
-    <div className="relative z-20 mb-6 flex items-center gap-2">
-      <div className="flex min-w-[6.5rem] shrink-0 justify-start">
+    <div className="relative z-20 mb-6 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+      <div className="flex justify-start">
         {showReorder && (
           <SectionReorderControls
             onMove={onMove}
@@ -156,8 +161,8 @@ function SectionToolbar({
           />
         )}
       </div>
-      <div className="min-w-0 flex-1 text-center">{titleEl}</div>
-      <div className="flex min-w-[2.25rem] shrink-0 justify-end">
+      <div className="min-w-0 text-center">{titleEl}</div>
+      <div className="flex justify-end">
         {isEdit && onAddElement && (
           <SectionElementFab
             onAddElement={onAddElement}
@@ -172,10 +177,10 @@ function SectionToolbar({
 function GalleryToolbar({ isEdit }: { isEdit: boolean }) {
   if (!isEdit) return null;
   return (
-    <div className="mb-6 flex items-center gap-2">
-      <div className="w-[5.5rem] shrink-0" />
-      <h2 className="flex-1 text-center text-sm font-bold uppercase tracking-wide">Галерея</h2>
-      <div className="w-[5.5rem] shrink-0" />
+    <div className="mb-6 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+      <div />
+      <h2 className="text-center text-sm font-bold uppercase tracking-wide">Галерея</h2>
+      <div />
     </div>
   );
 }
@@ -198,7 +203,7 @@ export function MemorialPageView({
   const [pendingSectionDelete, setPendingSectionDelete] = useState<string | null>(null);
 
   const framePhoto = fileUrl(memorial.coverPhoto);
-  const nameParts = splitFullName(memorial.fullName);
+  const nameLines = fullNameToThreeLines(memorial.fullName);
   const birthFormatted = formatDateRu(memorial.birthDate);
   const deathFormatted = formatDateRu(memorial.deathDate);
 
@@ -332,7 +337,7 @@ export function MemorialPageView({
             />
             {isEdit && !hasMapCoords && (
               <p className="mt-2 text-center text-xs text-memorial-text/60">
-                Нажмите на карту, чтобы поставить метку
+                Перетащите метку или нажмите на карту, чтобы указать место
               </p>
             )}
           </div>
@@ -355,7 +360,7 @@ export function MemorialPageView({
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file && edit) edit.onCoverUpload(file);
+          if (file && edit) edit.onCoverFileSelect(file);
           e.target.value = "";
         }}
       />
@@ -376,14 +381,6 @@ export function MemorialPageView({
                 />
               </div>
               <div className="memorial-frame-fixed pointer-events-none">
-                <Image
-                  src={FRAME_IMAGE}
-                  alt=""
-                  fill
-                  className="object-contain"
-                  aria-hidden
-                  priority
-                />
                 <div className="memorial-frame-photo pointer-events-none">
                   {framePhoto ? (
                     <div className="memorial-frame-photo-inner relative pointer-events-auto">
@@ -391,7 +388,7 @@ export function MemorialPageView({
                         src={framePhoto}
                         alt={memorial.fullName}
                         fill
-                        className="object-cover"
+                        className="memorial-frame-photo-image"
                         sizes="(max-width: 1023px) 85vw, 42vw"
                         priority
                       />
@@ -399,7 +396,7 @@ export function MemorialPageView({
                         <button
                           type="button"
                           onClick={() => coverInputRef.current?.click()}
-                          className="absolute bottom-2 right-2 rounded bg-black/60 px-2 py-1 text-xs text-white"
+                          className="absolute bottom-2 right-2 z-10 rounded bg-black/60 px-2 py-1 text-xs text-white"
                         >
                           Заменить
                         </button>
@@ -418,6 +415,14 @@ export function MemorialPageView({
                     </div>
                   ) : null}
                 </div>
+                <Image
+                  src={FRAME_IMAGE}
+                  alt=""
+                  fill
+                  className="memorial-frame-overlay object-contain"
+                  aria-hidden
+                  priority
+                />
               </div>
             </div>
           </div>
@@ -435,21 +440,29 @@ export function MemorialPageView({
             )}
 
             {isEdit ? (
-              <EditableText
-                value={memorial.fullName}
-                onChange={(value) => {
-                  edit!.onFullNameChange(value);
-                  edit!.onSlugChange(generateSlugFromName(value) || memorial.slug);
-                }}
-                className="memorial-name memorial-hero-name"
-                placeholder="ФИО"
-                multiline
-              />
+              <div className="memorial-name memorial-hero-name w-full">
+                {nameLines.map((line, index) => (
+                  <input
+                    key={index}
+                    type="text"
+                    value={line}
+                    onChange={(e) => {
+                      const next = [...nameLines] as [string, string, string];
+                      next[index] = e.target.value;
+                      const fullName = threeLinesToFullName(next);
+                      edit!.onFullNameChange(fullName);
+                      edit!.onSlugChange(generateSlugFromName(fullName) || memorial.slug);
+                    }}
+                    placeholder={["Фамилия", "Имя", "Отчество"][index]}
+                    className="w-full border-0 bg-transparent text-center outline-none ring-2 ring-transparent focus:ring-memorial-accent/40"
+                  />
+                ))}
+              </div>
             ) : (
               <div className="memorial-name memorial-hero-name">
-                {nameParts.map((part, index) => (
-                  <span key={`${part}-${index}`} className="block">
-                    {part}
+                {nameLines.map((part, index) => (
+                  <span key={index} className="block min-h-[1.08em]">
+                    {part || "\u00A0"}
                   </span>
                 ))}
               </div>

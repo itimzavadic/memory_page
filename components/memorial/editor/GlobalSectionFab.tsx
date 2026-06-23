@@ -16,7 +16,7 @@ const SECTION_OPTIONS: { type: CustomSectionType; label: string }[] = [
 export function GlobalSectionFab({ onAddSection }: GlobalSectionFabProps) {
   return (
     <div className="fixed bottom-6 right-6 z-[2500]">
-      <AttachedMenu label="Добавить секцию" size="lg" placement="above" fullScreenOverlay>
+      <AttachedMenu label="Добавить секцию" size="xl" placement="above" fullScreenOverlay>
         {(close) => (
           <>
             <p className="px-4 pb-1 pt-2 text-xs font-medium uppercase tracking-wide text-memorial-text/60">

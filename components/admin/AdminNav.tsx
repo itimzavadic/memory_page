@@ -4,12 +4,12 @@ import { logoutUser } from "@/services/auth.service";
 export function AdminNav() {
   return (
     <header className="border-b border-stone-200 bg-white">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-6">
-          <Link href="/admin/dashboard" className="text-lg font-semibold text-stone-800">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-6">
+          <Link href="/admin/dashboard" className="text-base font-semibold text-stone-800 sm:text-lg">
             mp_vobraz
           </Link>
-          <nav className="flex gap-4 text-sm">
+          <nav className="flex flex-wrap gap-3 text-sm sm:gap-4">
             <Link href="/admin/dashboard" className="text-stone-600 hover:text-stone-900">
               Панель
             </Link>

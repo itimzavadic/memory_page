@@ -1,6 +1,11 @@
 import fs from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
+import sharp from "sharp";
+import {
+  HERO_PHOTO_OUTPUT_HEIGHT,
+  HERO_PHOTO_OUTPUT_WIDTH,
+} from "@/lib/hero-frame";
 
 const UPLOAD_DIR = path.join(process.cwd(), "uploads", "images");
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -35,8 +40,14 @@ function validateRelativePath(relativePath: string): boolean {
   return !normalized.startsWith("..") && normalized.startsWith("images/");
 }
 
+export interface SaveUploadOptions {
+  /** Нормализовать обложку hero до целевого размера рамки. */
+  asCover?: boolean;
+}
+
 export async function saveUploadedFile(
   file: File,
+  options?: SaveUploadOptions,
 ): Promise<UploadResult> {
   if (!ALLOWED_MIME_TYPES.has(file.type)) {
     return { success: false, error: "Недопустимый тип файла" };
@@ -48,13 +59,24 @@ export async function saveUploadedFile(
 
   await ensureUploadDir();
 
-  const ext = MIME_TO_EXT[file.type] ?? ".jpg";
+  const ext = options?.asCover ? ".jpg" : (MIME_TO_EXT[file.type] ?? ".jpg");
   const filename = `${randomUUID()}${ext}`;
   const relativePath = `images/${filename}`;
   const absolutePath = path.join(process.cwd(), "uploads", relativePath);
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  await fs.writeFile(absolutePath, buffer);
+  const output = options?.asCover
+    ? await sharp(buffer)
+        .rotate()
+        .resize(HERO_PHOTO_OUTPUT_WIDTH, HERO_PHOTO_OUTPUT_HEIGHT, {
+          fit: "cover",
+          position: "centre",
+        })
+        .jpeg({ quality: 88, mozjpeg: true })
+        .toBuffer()
+    : buffer;
+
+  await fs.writeFile(absolutePath, output);
 
   return { success: true, path: relativePath };
 }

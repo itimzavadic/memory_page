@@ -71,6 +71,15 @@ body {
   z-index: 0 !important;
 }
 
+.memorial-map-container .leaflet-control-attribution {
+  display: none !important;
+}
+
+.memorial-map-container .leaflet-control-zoom,
+.memorial-map-container .leaflet-bar {
+  display: none;
+}
+
 .memorial-panel-enter {
   animation: memorial-panel-in 0.2s ease-out;
 }

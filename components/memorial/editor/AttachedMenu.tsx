@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 interface AttachedMenuProps {
   label: string;
-  size?: "sm" | "lg";
+  size?: "sm" | "lg" | "xl";
   placement?: "below" | "above";
   /** Полноэкранный оверлей блокирует клики по всей странице — только для глобальной FAB */
   fullScreenOverlay?: boolean;
@@ -14,6 +14,7 @@ interface AttachedMenuProps {
 const BTN_SIZE = {
   sm: "h-9 w-9 text-xl",
   lg: "h-10 w-10 text-2xl",
+  xl: "h-14 w-14 text-3xl",
 } as const;
 
 export function AttachedMenu({

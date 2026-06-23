@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Memorial not found" }, { status: 404 });
   }
 
-  const upload = await saveUploadedFile(file);
+  const upload = await saveUploadedFile(file, { asCover: type === "cover" });
   if (!upload.success || !upload.path) {
     return NextResponse.json({ error: upload.error ?? "Upload failed" }, { status: 400 });
   }
