@@ -1,4 +1,5 @@
 import slugify from "slugify";
+import { HERO_PHOTO_CROP_HEIGHT, HERO_PHOTO_CROP_WIDTH } from "@/lib/hero-frame";
 
 const CHARSET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -15,12 +16,7 @@ export function generateSlugFromName(fullName: string): string {
 }
 
 export function getMemorialFramePhotoSize(): { width: number; height: number } {
-  const width = Number(process.env.MEMORIAL_FRAME_PHOTO_WIDTH);
-  const height = Number(process.env.MEMORIAL_FRAME_PHOTO_HEIGHT);
-  return {
-    width: Number.isFinite(width) && width > 0 ? width : 492,
-    height: Number.isFinite(height) && height > 0 ? height : 680,
-  };
+  return { width: HERO_PHOTO_CROP_WIDTH, height: HERO_PHOTO_CROP_HEIGHT };
 }
 
 export function getSiteUrl(): string {

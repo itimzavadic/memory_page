@@ -3,12 +3,15 @@ import path from "path";
 import { randomUUID } from "crypto";
 import sharp from "sharp";
 import {
+  HERO_PHOTO_JPEG_QUALITY,
   HERO_PHOTO_OUTPUT_HEIGHT,
   HERO_PHOTO_OUTPUT_WIDTH,
 } from "@/lib/hero-frame";
 
 const UPLOAD_DIR = path.join(process.cwd(), "uploads", "images");
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+/** Обложка после crop: 1164×1608 JPEG 95% может быть крупнее обычных загрузок. */
+const MAX_COVER_FILE_SIZE = 8 * 1024 * 1024;
 
 const ALLOWED_MIME_TYPES = new Set([
   "image/jpeg",
@@ -41,8 +44,30 @@ function validateRelativePath(relativePath: string): boolean {
 }
 
 export interface SaveUploadOptions {
-  /** Нормализовать обложку hero до целевого размера рамки. */
+  /** Обложка hero: сохранить без повторного JPEG (уже обработана в crop-редакторе). */
   asCover?: boolean;
+}
+
+/** Обложка приходит из crop-редактора уже нужного размера и качества — не пережимаем. */
+async function normalizeCoverBuffer(buffer: Buffer): Promise<Buffer> {
+  const meta = await sharp(buffer).metadata();
+  const width = meta.width ?? 0;
+  const height = meta.height ?? 0;
+  const matchesTarget =
+    width === HERO_PHOTO_OUTPUT_WIDTH && height === HERO_PHOTO_OUTPUT_HEIGHT;
+
+  if (matchesTarget) {
+    return buffer;
+  }
+
+  return sharp(buffer)
+    .rotate()
+    .resize(HERO_PHOTO_OUTPUT_WIDTH, HERO_PHOTO_OUTPUT_HEIGHT, {
+      fit: "cover",
+      position: "centre",
+    })
+    .jpeg({ quality: HERO_PHOTO_JPEG_QUALITY, mozjpeg: true })
+    .toBuffer();
 }
 
 export async function saveUploadedFile(
@@ -53,8 +78,10 @@ export async function saveUploadedFile(
     return { success: false, error: "Недопустимый тип файла" };
   }
 
-  if (file.size > MAX_FILE_SIZE) {
-    return { success: false, error: "Файл слишком большой (макс. 5 МБ)" };
+  const maxSize = options?.asCover ? MAX_COVER_FILE_SIZE : MAX_FILE_SIZE;
+  if (file.size > maxSize) {
+    const maxMb = Math.round(maxSize / (1024 * 1024));
+    return { success: false, error: `Файл слишком большой (макс. ${maxMb} МБ)` };
   }
 
   await ensureUploadDir();
@@ -65,16 +92,7 @@ export async function saveUploadedFile(
   const absolutePath = path.join(process.cwd(), "uploads", relativePath);
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const output = options?.asCover
-    ? await sharp(buffer)
-        .rotate()
-        .resize(HERO_PHOTO_OUTPUT_WIDTH, HERO_PHOTO_OUTPUT_HEIGHT, {
-          fit: "cover",
-          position: "centre",
-        })
-        .jpeg({ quality: 88, mozjpeg: true })
-        .toBuffer()
-    : buffer;
+  const output = options?.asCover ? await normalizeCoverBuffer(buffer) : buffer;
 
   await fs.writeFile(absolutePath, output);
 

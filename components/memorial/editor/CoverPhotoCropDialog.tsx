@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import Cropper, { type Area } from "react-easy-crop";
 import {
-  HERO_PHOTO_ASPECT,
+  HERO_PHOTO_CROP_ASPECT,
+  HERO_PHOTO_CROP_HEIGHT,
+  HERO_PHOTO_CROP_WIDTH,
   HERO_PHOTO_OUTPUT_HEIGHT,
   HERO_PHOTO_OUTPUT_WIDTH,
 } from "@/lib/hero-frame";
@@ -78,7 +80,8 @@ export function CoverPhotoCropDialog({
         <div className="border-b border-stone-200 px-4 py-3">
           <h2 className="text-base font-semibold text-stone-900">Настроить фото в рамке</h2>
           <p className="mt-1 text-sm text-stone-500">
-            Перетащите и масштабируйте фото, чтобы лицо было в центре окна
+            Кадр {HERO_PHOTO_CROP_WIDTH}×{HERO_PHOTO_CROP_HEIGHT}px (файл{" "}
+            {HERO_PHOTO_OUTPUT_WIDTH}×{HERO_PHOTO_OUTPUT_HEIGHT})
           </p>
         </div>
 
@@ -88,7 +91,7 @@ export function CoverPhotoCropDialog({
               image={imageUrl}
               crop={crop}
               zoom={zoom}
-              aspect={HERO_PHOTO_ASPECT}
+              aspect={HERO_PHOTO_CROP_ASPECT}
               onCropChange={setCrop}
               onZoomChange={setZoom}
               onCropComplete={onCropComplete}
@@ -107,7 +110,7 @@ export function CoverPhotoCropDialog({
             <input
               type="range"
               min={1}
-              max={3}
+              max={5}
               step={0.05}
               value={zoom}
               onChange={(e) => setZoom(Number(e.target.value))}

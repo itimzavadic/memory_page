@@ -1,3 +1,7 @@
+import { HERO_PHOTO_JPEG_QUALITY } from "@/lib/hero-frame";
+
+export const HERO_COVER_JPEG_QUALITY = HERO_PHOTO_JPEG_QUALITY / 100;
+
 export interface PixelCrop {
   x: number;
   y: number;
@@ -29,6 +33,9 @@ export async function getCroppedImage(
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas не поддерживается");
 
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+
   ctx.drawImage(
     image,
     pixelCrop.x,
@@ -48,7 +55,7 @@ export async function getCroppedImage(
         else reject(new Error("Не удалось обрезать изображение"));
       },
       "image/jpeg",
-      0.92,
+      HERO_COVER_JPEG_QUALITY,
     );
   });
 }

@@ -41,7 +41,7 @@
   --hero-m-frame-margin: -140px;
   --hero-m-frame-aspect: 9 / 8;
   --hero-m-photo-inset: 9%;
-  --hero-m-photo-shrink: 30px;
+  /* padding-x/y задаются из lib/hero-frame.ts через MemorialPageView */
   --hero-m-photo-aspect: 492 / 680;
 
   --hero-m-candle-width: 42%;
@@ -204,14 +204,66 @@
   pointer-events: none;
 }
 
+.memorial-frame-replace-btn {
+  position: absolute;
+  right: 7%;
+  bottom: 7%;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 0.6);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: white;
+  pointer-events: auto;
+  transition: background-color 0.15s;
+}
+
+.memorial-frame-replace-btn:hover {
+  background: rgb(0 0 0 / 0.75);
+}
+
+.memorial-frame-edit-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.memorial-frame-add-btn {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  display: flex;
+  height: 4rem;
+  width: 4rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgb(241 231 221 / 0.9);
+  font-size: 2.25rem;
+  font-weight: 300;
+  line-height: 1;
+  color: rgb(104 85 76 / 0.5);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+  transition: color 0.15s;
+}
+
+.memorial-frame-add-btn:hover {
+  color: var(--color-memorial-accent);
+}
+
 .memorial-frame-photo {
   position: absolute;
-  inset: calc(var(--hero-m-photo-inset) + var(--hero-m-photo-shrink));
+  inset: var(--hero-m-photo-inset);
   z-index: 10;
-  overflow: hidden;
+  box-sizing: border-box;
+  padding: var(--hero-m-photo-padding-y, 72px) var(--hero-m-photo-padding-x, 52px);
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .memorial-frame-photo-inner {
@@ -221,8 +273,8 @@
 }
 
 .memorial-frame-photo-image {
-  object-fit: cover;
-  object-position: var(--cover-focal-x, 50%) var(--cover-focal-y, 50%);
+  object-fit: contain;
+  object-position: center;
 }
 
 .memorial-hero-epigraph {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type CSSProperties, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import type {
@@ -15,6 +15,7 @@ import type {
 import { isCustomSection } from "@/types/memorial";
 import { fileUrl, formatDateRu, generateSlugFromName } from "@/lib/utils";
 import { SECTION_TITLES, defaultEpitaphText, canMoveCustomSection } from "@/lib/content-blocks";
+import { HERO_PHOTO_PADDING_X, HERO_PHOTO_PADDING_Y } from "@/lib/hero-frame";
 import { MemorialFooter } from "@/components/memorial/MemorialFooter";
 import { GalleryCarousel } from "@/components/memorial/GalleryCarousel";
 import { SectionElementFab } from "@/components/memorial/editor/SectionElementFab";
@@ -365,7 +366,15 @@ export function MemorialPageView({
         }}
       />
 
-      <section className="memorial-hero flex min-h-[100dvh] flex-col bg-memorial-bg">
+      <section
+        className="memorial-hero flex min-h-[100dvh] flex-col bg-memorial-bg"
+        style={
+          {
+            "--hero-m-photo-padding-x": `${HERO_PHOTO_PADDING_X}px`,
+            "--hero-m-photo-padding-y": `${HERO_PHOTO_PADDING_Y}px`,
+          } as CSSProperties
+        }
+      >
         <div className="memorial-hero-content memorial-hero-inner flex min-h-0 flex-1 flex-col">
           <div className="memorial-hero-visual">
             <div className="memorial-frame-composition">
@@ -383,35 +392,16 @@ export function MemorialPageView({
               <div className="memorial-frame-fixed pointer-events-none">
                 <div className="memorial-frame-photo pointer-events-none">
                   {framePhoto ? (
-                    <div className="memorial-frame-photo-inner relative pointer-events-auto">
+                    <div className="memorial-frame-photo-inner relative">
                       <Image
                         src={framePhoto}
                         alt={memorial.fullName}
                         fill
+                        unoptimized
                         className="memorial-frame-photo-image"
                         sizes="(max-width: 1023px) 85vw, 42vw"
                         priority
                       />
-                      {isEdit && (
-                        <button
-                          type="button"
-                          onClick={() => coverInputRef.current?.click()}
-                          className="absolute bottom-2 right-2 z-10 rounded bg-black/60 px-2 py-1 text-xs text-white"
-                        >
-                          Заменить
-                        </button>
-                      )}
-                    </div>
-                  ) : isEdit ? (
-                    <div className="pointer-events-auto flex h-full w-full items-center justify-center">
-                      <button
-                        type="button"
-                        onClick={() => coverInputRef.current?.click()}
-                        className="flex h-16 w-16 items-center justify-center rounded-full bg-memorial-bg/80 text-4xl font-light text-memorial-text/50 shadow hover:text-memorial-accent"
-                        aria-label="Загрузить фото"
-                      >
-                        +
-                      </button>
                     </div>
                   ) : null}
                 </div>
@@ -424,6 +414,28 @@ export function MemorialPageView({
                   priority
                 />
               </div>
+              {isEdit && (
+                <div className="memorial-frame-edit-layer">
+                  {framePhoto ? (
+                    <button
+                      type="button"
+                      onClick={() => coverInputRef.current?.click()}
+                      className="memorial-frame-replace-btn"
+                    >
+                      Заменить
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => coverInputRef.current?.click()}
+                      className="memorial-frame-add-btn"
+                      aria-label="Загрузить фото"
+                    >
+                      +
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
