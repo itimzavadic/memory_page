@@ -3,13 +3,20 @@
  * CSS (memorial-hero) читает padding через inline-переменные в MemorialPageView.
  */
 
-/** Прозрачное окно в frame.png (логический размер). */
-export const HERO_FRAME_WINDOW_WIDTH = 492;
-export const HERO_FRAME_WINDOW_HEIGHT = 680;
+/** Прозрачное окно в frame.webp (логический размер, ¼ от базового макета). */
+export const HERO_FRAME_WINDOW_WIDTH = 123;
+export const HERO_FRAME_WINDOW_HEIGHT = 170;
+
+/** На сколько px расширить фото с каждой стороны (уменьшает padding). */
+export const HERO_PHOTO_SIDE_EXPAND = 15;
 
 /** Внутренние отступы внутри окна рамки (уменьшают видимую область фото). */
-export const HERO_PHOTO_PADDING_X = 52;
-export const HERO_PHOTO_PADDING_Y = 72;
+export const HERO_PHOTO_PADDING_X = 0;
+export const HERO_PHOTO_PADDING_Y = 3;
+
+/** Доп. вынос фото, если padding упёрся в 0 (SIDE_EXPAND − прежний padding). */
+export const HERO_PHOTO_BLEED_X = 2;
+export const HERO_PHOTO_BLEED_Y = 0;
 
 /** Видимая область фото = окно минус отступы. */
 export const HERO_PHOTO_CROP_WIDTH =

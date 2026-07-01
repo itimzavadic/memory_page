@@ -15,7 +15,7 @@ import type {
 import { isCustomSection } from "@/types/memorial";
 import { fileUrl, formatDateRu, generateSlugFromName } from "@/lib/utils";
 import { SECTION_TITLES, defaultEpitaphText, canMoveCustomSection } from "@/lib/content-blocks";
-import { HERO_PHOTO_PADDING_X, HERO_PHOTO_PADDING_Y } from "@/lib/hero-frame";
+import { HERO_PHOTO_BLEED_X, HERO_PHOTO_BLEED_Y, HERO_PHOTO_PADDING_X, HERO_PHOTO_PADDING_Y } from "@/lib/hero-frame";
 import { MemorialFooter } from "@/components/memorial/MemorialFooter";
 import { GalleryCarousel } from "@/components/memorial/GalleryCarousel";
 import { SectionElementFab } from "@/components/memorial/editor/SectionElementFab";
@@ -37,7 +37,7 @@ const CemeteryMap = dynamic(
   },
 );
 
-const FRAME_IMAGE = "/assets/frame.png";
+const FRAME_IMAGE = "/assets/frame.webp";
 
 export interface MemorialEditHandlers {
   onFullNameChange: (value: string) => void;
@@ -372,6 +372,8 @@ export function MemorialPageView({
           {
             "--hero-m-photo-padding-x": `${HERO_PHOTO_PADDING_X}px`,
             "--hero-m-photo-padding-y": `${HERO_PHOTO_PADDING_Y}px`,
+            "--hero-m-photo-bleed-x": `${HERO_PHOTO_BLEED_X}px`,
+            "--hero-m-photo-bleed-y": `${HERO_PHOTO_BLEED_Y}px`,
           } as CSSProperties
         }
       >

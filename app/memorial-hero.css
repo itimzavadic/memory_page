@@ -3,60 +3,69 @@
 
   MOBILE (<1024px), единицы: px и %
   ─────────────────────────────────
-  frame-overflow     — на сколько рамка выступает за край экрана с КАЖДОЙ стороны (140px)
-  frame-width-add    — на сколько рамка шире слота суммарно (280px)
-  frame-margin       — отрицательный отступ рамки (-140px)
+  frame-overflow     — на сколько рамка выступает за край экрана с КАЖДОЙ стороны (35px)
+  frame-width-add    — на сколько рамка шире слота суммарно (70px)
+  frame-margin       — отрицательный отступ рамки (-35px)
   candle-width       — ширина свечи от ширины слота (42%)
-  candle-scale       — 1.48
-  candle-offset-x/y  — смещение 120px под углом 70° (-41px, 113px)
+  candle-scale       — 0.74
+  candle-offset-x/y  — базовое смещение (-14px, 29px)
+  candle-move-x/y      — ручной сдвиг: +X вправо, +Y вверх (+50px, −50px)
+  candle-side-expand   — расширение свечи с каждой стороны (55px)
   candle-shift-x/y   — базовый сдвиг (-8%, -14%)
   text-frame-gap     — зазор между текстом и рамкой (24px)
   text-padding-x     — боковые отступы текста (16–40px)
-  frame-pos-y         — сдвиг блока рамки и свечи вниз (200px)
+  frame-pos-y         — сдвиг блока рамки и свечи вниз (100px)
+  frame-side-inset    — отступ рамки и фото от краёв слота с каждой стороны (80px)
 
   DESKTOP (≥1024px), layout в px
   ───────────────────────────────
   page-margin        — отступ hero от краёв экрана (57px)
   viewport-h         — рабочая высота: 100dvh − 114px
-  frame-border       — «толщина» декора рамки со всех сторон (329px)
-  frame-out-top      — рамка выступает вверх от слота (397px)
-  frame-out-left     — рамка выступает влево (76px)
-  frame-out-right    — доп. ширина справа (265px)
-  frame-pos-y        — сдвиг блока рамки вниз (222px)
-  frame-width-extra  — добавка к ширине: 329×2+265+76 = 999px
-  frame-height-extra — добавка к высоте: 329×2+397 = 1055px
+  frame-border       — «толщина» декора рамки со всех сторон (83px)
+  frame-out-top      — рамка выступает вверх от слота (100px)
+  frame-out-left     — рамка выступает влево (19px)
+  frame-out-right    — доп. ширина справа (67px)
+  frame-pos-y        — сдвиг блока рамки вниз (106px)
+  frame-width-extra  — добавка к ширине: 83×2+67+19 = 250px
+  frame-height-extra — добавка к высоте: 83×2+100 = 264px
   candle-width       — 22% от блока рамки
-  candle-scale       — 1.51
-  candle-pos-x/y     — 278px, 591px
-  candle-offset-x/y  — смещение 120px под углом 70° (-41px, 113px)
+  candle-scale       — 0.755
+  candle-pos-x/y     — 70px, 148px
+  candle-offset-x/y  — смещение (-14px, 29px)
+  candle-move-x/y    — ручной сдвиг: +X вправо, +Y вверх (+50px, −50px)
   text-lift          — подъём текстового блока (-100px)
-  shelf-gap          — мобайл: светлая зона hero снизу (210px), больше = тёмный фон ниже
-  shelf-top          — десктоп: линия тёмного фона (50%+970px)
+  shelf-gap          — мобайл: светлая зона hero снизу, меньше = тёмный фон выше (-133px)
+  shelf-top          — десктоп: линия тёмного фона (50%+57px)
 */
 
 /* ── Mobile tokens ── */
 :root {
-  --hero-m-frame-overflow: 140px;
-  --hero-m-frame-width-add: 280px;
-  --hero-m-frame-margin: -140px;
-  --hero-m-frame-aspect: 9 / 8;
+  --hero-m-frame-overflow: 35px;
+  --hero-m-frame-width-add: 70px;
+  --hero-m-frame-margin: -35px;
+  --hero-m-frame-aspect: 1467 / 1888;
   --hero-m-photo-inset: 9%;
   /* padding-x/y задаются из lib/hero-frame.ts через MemorialPageView */
   --hero-m-photo-aspect: 492 / 680;
 
   --hero-m-candle-width: 42%;
-  --hero-m-candle-scale: 1.48;
+  --hero-m-candle-scale: 0.74;
   --hero-m-candle-shift-x: -8%;
   --hero-m-candle-shift-y: -14%;
-  --hero-m-candle-offset-x: -56px;
-  --hero-m-candle-offset-y: 113px;
+  --hero-m-candle-offset-x: -14px;
+  --hero-m-candle-offset-y: 29px;
+
+  --hero-candle-side-expand: 55px;
+  --hero-candle-move-x: 50px;
+  --hero-candle-move-y: -50px;
 
   --hero-m-text-frame-gap: 24px;
   --hero-m-text-padding-x: clamp(16px, 5vw, 40px);
   --hero-m-hero-padding-y: clamp(16px, 4vw, 24px);
   --hero-m-hero-padding-bottom: clamp(24px, 5vw, 40px);
-  --hero-m-shelf-gap: 185px;
-  --hero-m-frame-pos-y: 200px;
+  --hero-m-shelf-gap: -133px;
+  --hero-m-frame-pos-y: 100px;
+  --hero-frame-side-inset: 80px;
 
   --hero-m-epigraph-size: clamp(34px, 8.5vw, 44px);
   --hero-m-name-size: clamp(32px, 10vw, 40px);
@@ -66,7 +75,7 @@
   --hero-m-dates-margin-top: 16px;
 
   --hero-m-text-lift: 40px;
-  --hero-m-lower-content-pad: 100px;
+  --hero-m-lower-content-pad: 25px;
 }
 
 /* ── Desktop tokens ── */
@@ -75,22 +84,22 @@
     --hero-d-page-margin: 57px;
     --hero-d-viewport-h: calc(100dvh - 114px);
 
-    --hero-d-frame-border: 329px;
-    --hero-d-frame-out-top: 397px;
-    --hero-d-frame-out-left: 76px;
-    --hero-d-frame-out-right: 265px;
-    --hero-d-frame-margin-top: -397px;
-    --hero-d-frame-margin-left: -76px;
-    --hero-d-frame-pos-y: 222px;
-    --hero-d-frame-width-extra: 999px;
-    --hero-d-frame-height-extra: 1055px;
+    --hero-d-frame-border: 83px;
+    --hero-d-frame-out-top: 100px;
+    --hero-d-frame-out-left: 19px;
+    --hero-d-frame-out-right: 67px;
+    --hero-d-frame-margin-top: -100px;
+    --hero-d-frame-margin-left: -19px;
+    --hero-d-frame-pos-y: 106px;
+    --hero-d-frame-width-extra: 250px;
+    --hero-d-frame-height-extra: 264px;
 
     --hero-d-candle-width: 22%;
-    --hero-d-candle-scale: 1.51;
-    --hero-d-candle-pos-x: 278px;
-    --hero-d-candle-pos-y: 591px;
-    --hero-d-candle-offset-x: -56px;
-    --hero-d-candle-offset-y: 113px;
+    --hero-d-candle-scale: 0.755;
+    --hero-d-candle-pos-x: 70px;
+    --hero-d-candle-pos-y: 148px;
+    --hero-d-candle-offset-x: -14px;
+    --hero-d-candle-offset-y: 29px;
 
     --hero-d-text-lift: -100px;
     --hero-d-text-max-width: 544px;
@@ -98,8 +107,8 @@
     --hero-d-hero-padding-x: clamp(16px, 5vw, 40px);
     --hero-d-hero-padding-y: clamp(16px, 4vw, 24px);
 
-    --hero-d-shelf-top: calc(50% + 945px);
-    --hero-d-lower-content-pad: 250px;
+    --hero-d-shelf-top: calc(50% + 57px);
+    --hero-d-lower-content-pad: 63px;
 
     --hero-d-epigraph-size: clamp(36px, 2.8vw, 48px);
     --hero-d-name-size: clamp(40px, 3.5vw, 60px);
@@ -161,6 +170,8 @@
   width: 100%;
   flex-shrink: 0;
   overflow-x: clip;
+  box-sizing: border-box;
+  padding: var(--hero-frame-side-inset);
 }
 
 .memorial-frame-composition {
@@ -171,9 +182,9 @@
 
 .memorial-candle {
   position: absolute;
-  left: 0;
-  bottom: 0;
-  width: var(--hero-m-candle-width);
+  left: var(--hero-candle-move-x);
+  bottom: var(--hero-candle-move-y);
+  width: calc(var(--hero-m-candle-width) + 2 * var(--hero-candle-side-expand));
   z-index: 40;
   transform: translate(
       calc(var(--hero-m-candle-shift-x) + var(--hero-m-candle-offset-x)),
@@ -259,17 +270,18 @@
   inset: var(--hero-m-photo-inset);
   z-index: 10;
   box-sizing: border-box;
-  padding: var(--hero-m-photo-padding-y, 72px) var(--hero-m-photo-padding-x, 52px);
+  padding: var(--hero-m-photo-padding-y, 3px) var(--hero-m-photo-padding-x, 0px);
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .memorial-frame-photo-inner {
   position: relative;
-  width: 100%;
-  height: 100%;
+  width: calc(100% + 2 * var(--hero-m-photo-bleed-x, 0px));
+  height: calc(100% + 2 * var(--hero-m-photo-bleed-y, 0px));
+  margin: calc(-1 * var(--hero-m-photo-bleed-y, 0px)) calc(-1 * var(--hero-m-photo-bleed-x, 0px));
 }
 
 .memorial-frame-photo-image {
@@ -352,16 +364,18 @@
     justify-content: flex-start;
     align-items: flex-end;
     align-self: end;
+    padding: 0;
     padding-bottom: var(--hero-d-hero-padding-y);
   }
 
   .memorial-frame-composition {
     width: auto;
+    max-width: 100%;
     transform: translateY(var(--hero-d-frame-pos-y));
   }
 
   .memorial-candle {
-    width: var(--hero-d-candle-width);
+    width: calc(var(--hero-d-candle-width) + 2 * var(--hero-candle-side-expand));
     transform: translate(
         calc(-28% + var(--hero-d-candle-pos-x) + var(--hero-d-candle-offset-x)),
         calc(10% - var(--hero-d-candle-pos-y) + var(--hero-d-candle-offset-y))
@@ -371,9 +385,17 @@
 
   .memorial-frame-fixed {
     aspect-ratio: auto;
-    width: calc(var(--hero-d-viewport-h) * 0.75 + var(--hero-d-frame-width-extra));
-    height: calc(var(--hero-d-viewport-h) + var(--hero-d-frame-height-extra));
-    max-width: calc(85% + var(--hero-d-frame-width-extra));
+    width: calc(
+      var(--hero-d-viewport-h) * 0.1875 + var(--hero-d-frame-width-extra) -
+        2 * var(--hero-frame-side-inset)
+    );
+    height: calc(
+      var(--hero-d-viewport-h) + var(--hero-d-frame-height-extra) -
+        2 * var(--hero-frame-side-inset)
+    );
+    max-width: calc(
+      85% + var(--hero-d-frame-width-extra) - 2 * var(--hero-frame-side-inset)
+    );
     margin-top: var(--hero-d-frame-margin-top);
     margin-left: var(--hero-d-frame-margin-left);
     margin-right: auto;
